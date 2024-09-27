@@ -29,11 +29,11 @@ func (m *MemStorage) UpdateCounter(name string, value int64) {
 
 func validatePost(r *http.Request) (status int, err error) {
 	if r.Method != http.MethodPost {
-		return http.StatusMethodNotAllowed, errors.New("Invalid method, only POST is allowed")
+		return http.StatusMethodNotAllowed, errors.New("invalid method, only POST is allowed")
 	}
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "text/plain" {
-		return http.StatusUnsupportedMediaType, errors.New("Only text/plain is supported")
+		return http.StatusUnsupportedMediaType, errors.New("only text/plain is supported")
 	}
 
 	return
