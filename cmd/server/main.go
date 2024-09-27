@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -43,15 +42,13 @@ func update(w http.ResponseWriter, r *http.Request) {
 	status, err := validatePost(r)
 	if err != nil {
 		w.WriteHeader(status)
-		w.Write([]byte(err.Error()))
 		return
 	}
 
 	fragments := strings.Split(r.URL.Path, "/")
 
 	if len(fragments) != 5 {
-		w.WriteHeader(http.StatusBadRequest)
-		io.WriteString(w, "Badly formed URL")
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
@@ -61,7 +58,6 @@ func update(w http.ResponseWriter, r *http.Request) {
 
 	if len(name) < 1 {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("Invalid value name"))
 		return
 	}
 
@@ -81,7 +77,6 @@ func update(w http.ResponseWriter, r *http.Request) {
 		memStorage.UpdateGauge(name, value)
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid value type"))
 		return
 	}
 	w.WriteHeader(http.StatusOK)
