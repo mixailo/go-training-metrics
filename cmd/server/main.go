@@ -29,6 +29,11 @@ func parseURL(url string) (parsed parsedRequestURL, err error) {
 		return parsed, errors.New("invalid url, must be 5 fragments")
 	}
 
+	if len(fragments[3]) < 1 {
+		// empty name
+		return parsed, errors.New("invalid item name")
+	}
+
 	parsed.itemType = fragments[2]
 	parsed.itemName = fragments[3]
 	parsed.unConvertedValue = fragments[4]
@@ -52,11 +57,6 @@ func updateItemValue(w http.ResponseWriter, r *http.Request) {
 
 	parsedURL, err := parseURL(r.URL.Path)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if len(parsedURL.itemName) < 1 {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
