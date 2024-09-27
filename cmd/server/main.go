@@ -8,6 +8,88 @@ import (
 	"strings"
 )
 
+func validatePost(r *http.Request) (status int, err error) {
+	if r.Method != http.MethodPost {
+		return http.StatusBadRequest, errors.New("invalid method, only POST is allowed")
+	}
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "text/plain" {
+		return http.StatusBadRequest, errors.New("only text/plain is supported")
+	}
+
+	return
+}
+
+func parseUrl(url string) (parsed parsedRequestUrl, err error) {
+	// split URL to get fragments
+	fragments := strings.Split(url, "/")
+
+	if len(fragments) != 5 {
+		// simple integrity check (TODO: replace by regular expressions or any other suitable method)
+		return parsed, errors.New("invalid url, must be 5 fragments")
+	}
+
+	if len(fragments[3]) < 1 {
+		// empty name
+		return parsed, errors.New("invalid item name")
+	}
+
+	parsed.itemType = fragments[2]
+	parsed.itemName = fragments[3]
+	parsed.unConvertedValue = fragments[4]
+
+	return
+}
+
+type parsedRequestUrl struct {
+	itemType         string
+	itemName         string
+	unConvertedValue string
+}
+
+func updateItemValue(w http.ResponseWriter, r *http.Request) {
+	// check request method and content-type
+	status, err := validatePost(r)
+	if err != nil {
+		w.WriteHeader(status)
+		return
+	}
+
+	parsedUrl, err := parseUrl(r.URL.Path)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if parsedUrl.itemType == TypeCounter {
+		// counter type increments stored value
+		convertedValue, err := strconv.ParseInt(parsedUrl.unConvertedValue, 10, 64)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		storage.UpdateCounter(parsedUrl.itemName, convertedValue)
+	} else if parsedUrl.itemType == TypeGauge {
+		// gauge type replaces stored value
+		convertedValue, err := strconv.ParseFloat(parsedUrl.unConvertedValue, 64)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		storage.UpdateGauge(parsedUrl.itemName, convertedValue)
+	} else {
+		// unknown type
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+const (
+	TypeCounter string = "counter"
+	TypeGauge   string = "gauge"
+)
+
 type MemStorage struct {
 	gauges   map[string]float64
 	counters map[string]int64
@@ -26,76 +108,20 @@ func (m *MemStorage) UpdateCounter(name string, value int64) {
 	}
 }
 
-func validatePost(r *http.Request) (status int, err error) {
-	if r.Method != http.MethodPost {
-		return http.StatusMethodNotAllowed, errors.New("invalid method, only POST is allowed")
-	}
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "text/plain" {
-		return http.StatusUnsupportedMediaType, errors.New("only text/plain is supported")
-	}
-
-	return
+type MetricsStorage interface {
+	UpdateCounter(name string, value int64)
+	UpdateGauge(name string, value float64)
 }
 
-func update(w http.ResponseWriter, r *http.Request) {
-	status, err := validatePost(r)
-	if err != nil {
-		w.WriteHeader(status)
-		return
-	}
-
-	fragments := strings.Split(r.URL.Path, "/")
-
-	if len(fragments) != 5 {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	counterType := fragments[2]
-	name := fragments[3]
-	unConvertedValue := fragments[4]
-
-	if len(name) < 1 {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	if counterType == TypeCounter {
-		value, err := strconv.ParseInt(unConvertedValue, 10, 64)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		memStorage.UpdateCounter(name, value)
-	} else if counterType == TypeGauge {
-		value, err := strconv.ParseFloat(unConvertedValue, 64)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		memStorage.UpdateGauge(name, value)
-	} else {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+func NewStorage() MetricsStorage {
+	return &MemStorage{gauges: make(map[string]float64), counters: make(map[string]int64)}
 }
 
-const (
-	TypeCounter string = "counter"
-	TypeGauge   string = "gauge"
-)
-
-func NewMemStorage() MemStorage {
-	return MemStorage{gauges: make(map[string]float64), counters: make(map[string]int64)}
-}
-
-var memStorage = NewMemStorage()
+var storage = NewStorage()
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/update/", update)
+	mux.HandleFunc("/update/", updateItemValue)
 	mux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(http.StatusBadRequest)
 	})
