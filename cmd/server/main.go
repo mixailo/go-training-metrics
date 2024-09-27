@@ -20,18 +20,13 @@ func validatePost(r *http.Request) (status int, err error) {
 	return
 }
 
-func parseUrl(url string) (parsed parsedRequestUrl, err error) {
+func parseURL(url string) (parsed parsedRequestURL, err error) {
 	// split URL to get fragments
 	fragments := strings.Split(url, "/")
 
 	if len(fragments) != 5 {
 		// simple integrity check (TODO: replace by regular expressions or any other suitable method)
 		return parsed, errors.New("invalid url, must be 5 fragments")
-	}
-
-	if len(fragments[3]) < 1 {
-		// empty name
-		return parsed, errors.New("invalid item name")
 	}
 
 	parsed.itemType = fragments[2]
@@ -41,7 +36,7 @@ func parseUrl(url string) (parsed parsedRequestUrl, err error) {
 	return
 }
 
-type parsedRequestUrl struct {
+type parsedRequestURL struct {
 	itemType         string
 	itemName         string
 	unConvertedValue string
@@ -55,28 +50,33 @@ func updateItemValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	parsedUrl, err := parseUrl(r.URL.Path)
+	parsedURL, err := parseURL(r.URL.Path)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if parsedUrl.itemType == TypeCounter {
+	if len(parsedURL.itemName) < 1 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	if parsedURL.itemType == TypeCounter {
 		// counter type increments stored value
-		convertedValue, err := strconv.ParseInt(parsedUrl.unConvertedValue, 10, 64)
+		convertedValue, err := strconv.ParseInt(parsedURL.unConvertedValue, 10, 64)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		storage.UpdateCounter(parsedUrl.itemName, convertedValue)
-	} else if parsedUrl.itemType == TypeGauge {
+		storage.UpdateCounter(parsedURL.itemName, convertedValue)
+	} else if parsedURL.itemType == TypeGauge {
 		// gauge type replaces stored value
-		convertedValue, err := strconv.ParseFloat(parsedUrl.unConvertedValue, 64)
+		convertedValue, err := strconv.ParseFloat(parsedURL.unConvertedValue, 64)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		storage.UpdateGauge(parsedUrl.itemName, convertedValue)
+		storage.UpdateGauge(parsedURL.itemName, convertedValue)
 	} else {
 		// unknown type
 		w.WriteHeader(http.StatusBadRequest)
