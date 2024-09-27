@@ -50,7 +50,7 @@ func update(w http.ResponseWriter, r *http.Request) {
 	fragments := strings.Split(r.URL.Path, "/")
 
 	if len(fragments) != 5 {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusBadRequest)
 		io.WriteString(w, "Badly formed URL")
 		return
 	}
@@ -68,14 +68,14 @@ func update(w http.ResponseWriter, r *http.Request) {
 	if counterType == TypeCounter {
 		value, err := strconv.ParseInt(unConvertedValue, 10, 64)
 		if err != nil {
-			w.WriteHeader(http.StatusNotAcceptable)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		memStorage.UpdateCounter(name, value)
 	} else if counterType == TypeGauge {
 		value, err := strconv.ParseFloat(unConvertedValue, 64)
 		if err != nil {
-			w.WriteHeader(http.StatusNotAcceptable)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		memStorage.UpdateGauge(name, value)
