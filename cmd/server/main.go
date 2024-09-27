@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/mixailo/go-training-metrics/cmd/server/metrics_storage"
+	"github.com/mixailo/go-training-metrics/internal/metricsStorage"
 	"net/http"
 	"strconv"
 	"strings"
@@ -91,7 +91,7 @@ const (
 	TypeGauge   string = "gauge"
 )
 
-var storage = metrics_storage.NewStorage()
+var storage = metricsStorage.NewStorage()
 
 func main() {
 	mux := http.NewServeMux()
