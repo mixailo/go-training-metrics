@@ -1,4 +1,4 @@
-package metricsStorage
+package metricsstorage
 
 type MemStorage struct {
 	gauges   map[string]float64
