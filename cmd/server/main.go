@@ -3,7 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/mixailo/go-training-metrics/internal/metricsstorage"
+	"github.com/mixailo/go-training-metrics/internal/metrics"
+	"github.com/mixailo/go-training-metrics/internal/storage"
 	"net/http"
 	"strconv"
 	"strings"
@@ -62,22 +63,22 @@ func updateItemValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if parsedURL.itemType == TypeCounter {
+	if parsedURL.itemType == metrics.TypeCounter.String() {
 		// counter type increments stored value
 		convertedValue, err := strconv.ParseInt(parsedURL.unConvertedValue, 10, 64)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		storage.UpdateCounter(parsedURL.itemName, convertedValue)
-	} else if parsedURL.itemType == TypeGauge {
+		serverStorage.UpdateCounter(parsedURL.itemName, convertedValue)
+	} else if parsedURL.itemType == metrics.TypeGauge.String() {
 		// gauge type replaces stored value
 		convertedValue, err := strconv.ParseFloat(parsedURL.unConvertedValue, 64)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		storage.UpdateGauge(parsedURL.itemName, convertedValue)
+		serverStorage.UpdateGauge(parsedURL.itemName, convertedValue)
 	} else {
 		// unknown type
 		w.WriteHeader(http.StatusBadRequest)
@@ -86,12 +87,7 @@ func updateItemValue(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-const (
-	TypeCounter string = "counter"
-	TypeGauge   string = "gauge"
-)
-
-var storage = metricsstorage.NewStorage()
+var serverStorage = storage.NewStorage()
 
 func main() {
 	mux := http.NewServeMux()
