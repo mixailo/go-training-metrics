@@ -33,7 +33,7 @@ func TestType_String(t *testing.T) {
 func TestNewReport(t *testing.T) {
 	report := NewReport()
 	require.NotNil(t, report)
-	assert.IsType(t, report, Report{})
+	assert.IsType(t, Report{}, report)
 }
 
 func TestReport_Add(t *testing.T) {

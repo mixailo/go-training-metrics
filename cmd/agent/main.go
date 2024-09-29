@@ -18,7 +18,7 @@ func main() {
 	lastReport := time.Now()
 	var totalPolls int64
 	var report metrics.Report
-	reportEndpoint := reporter.NewServerEndpoint("http", "localhost", 8080)
+	reportEndpoint := reporter.NewServerEndpoint("http", "127.0.0.1", 8080)
 
 	for {
 		currentTime := time.Now()

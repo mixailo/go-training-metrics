@@ -43,11 +43,14 @@ func SendReport(report metrics.Report, endpoint ServerEndpoint) (err error) {
 	return
 }
 
-func sendReportMetric(metric metrics.Data, endpoint ServerEndpoint) (err error) {
+func sendReportMetric(metric metrics.Data, endpoint ServerEndpoint) error {
 	reportURLPath := endpoint.CreateURL(reportPath(metric))
-	_, err = http.Post(reportURLPath, "text/plain", nil)
+	response, err := http.Post(reportURLPath, "text/plain", nil)
+	if err != nil {
+		response.Body.Close()
+	}
 
-	return
+	return err
 }
 
 func reportPath(metric metrics.Data) (result string) {

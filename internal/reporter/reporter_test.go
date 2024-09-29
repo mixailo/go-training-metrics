@@ -8,7 +8,7 @@ import (
 
 func TestNewServerEndpoint(t *testing.T) {
 	endpoint := NewServerEndpoint("http", "localhost", 8080)
-	assert.IsType(t, endpoint, ServerEndpoint{})
+	assert.IsType(t, ServerEndpoint{}, endpoint)
 }
 
 func TestSendReport(t *testing.T) {
