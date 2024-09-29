@@ -1,7 +1,6 @@
 package reporter
 
 import (
-	"fmt"
 	"github.com/mixailo/go-training-metrics/internal/metrics"
 	"log"
 	"net/http"
@@ -33,7 +32,6 @@ func (se *ServerEndpoint) CreateURL(path string) string {
 }
 
 func SendReport(report metrics.Report, endpoint ServerEndpoint) (err error) {
-	fmt.Println(report)
 	for _, metric := range report.All() {
 		err = sendReportMetric(metric, endpoint)
 		if err != nil {
