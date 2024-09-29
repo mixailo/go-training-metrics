@@ -18,8 +18,8 @@ func TestSendReport(t *testing.T) {
 func TestServerEndpoint_CreateUrl(t *testing.T) {
 	endpoint := NewServerEndpoint("http", "localhost", 8080)
 
-	assert.Equal(t, "http://localhost:8080/path", endpoint.CreateUrl("/path"))
-	assert.Equal(t, "http://localhost:8080/path", endpoint.CreateUrl("path"))
+	assert.Equal(t, "http://localhost:8080/path", endpoint.CreateURL("/path"))
+	assert.Equal(t, "http://localhost:8080/path", endpoint.CreateURL("path"))
 
 }
 

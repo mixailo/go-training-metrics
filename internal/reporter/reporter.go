@@ -28,7 +28,7 @@ func (se *ServerEndpoint) String() string {
 	return se.scheme + "://" + se.host + ":" + strconv.Itoa(se.port)
 }
 
-func (se *ServerEndpoint) CreateUrl(path string) string {
+func (se *ServerEndpoint) CreateURL(path string) string {
 	return se.String() + "/" + strings.TrimLeft(path, "/")
 }
 
@@ -44,8 +44,8 @@ func SendReport(report metrics.Report, endpoint ServerEndpoint) (err error) {
 }
 
 func sendReportMetric(metric metrics.Data, endpoint ServerEndpoint) (err error) {
-	reportUrlPath := endpoint.CreateUrl(reportPath(metric))
-	_, err = http.Post(reportUrlPath, "text/plain", nil)
+	reportURLPath := endpoint.CreateURL(reportPath(metric))
+	_, err = http.Post(reportURLPath, "text/plain", nil)
 
 	return
 }
