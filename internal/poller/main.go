@@ -16,7 +16,7 @@ func PollMetrics() metrics.Report {
 	report.Add(metrics.TypeGauge, "Alloc", strconv.FormatUint(memStats.Alloc, 10))
 	report.Add(metrics.TypeGauge, "BuckHashSys", strconv.FormatUint(memStats.BuckHashSys, 10))
 	report.Add(metrics.TypeGauge, "Frees", strconv.FormatUint(memStats.Frees, 10))
-	report.Add(metrics.TypeGauge, "GCCPUFraction", strconv.FormatFloat(memStats.GCCPUFraction, 'f', 10, 64))
+	report.Add(metrics.TypeGauge, "GCCPUFraction", strconv.FormatFloat(memStats.GCCPUFraction, 'f', -1, 64))
 	report.Add(metrics.TypeGauge, "GCSys", strconv.FormatUint(memStats.GCSys, 10))
 	report.Add(metrics.TypeGauge, "HeapAlloc", strconv.FormatUint(memStats.HeapAlloc, 10))
 	report.Add(metrics.TypeGauge, "HeapIdle", strconv.FormatUint(memStats.HeapIdle, 10))

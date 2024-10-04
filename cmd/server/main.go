@@ -76,7 +76,7 @@ func (sa *storageAware) getItemValue(w http.ResponseWriter, r *http.Request) {
 		v, ok := sa.stor.GetGauge(mName)
 		if ok {
 			w.WriteHeader(http.StatusOK)
-			io.WriteString(w, strconv.FormatFloat(v, 'f', 10, 64))
+			io.WriteString(w, strconv.FormatFloat(v, 'f', -1, 64))
 			return
 		} else {
 			w.WriteHeader(http.StatusNotFound)
@@ -91,7 +91,7 @@ func (sa *storageAware) getAllValues(w http.ResponseWriter, r *http.Request) {
 	head := `<html><head><title>All Metrics</title></head><body><table>`
 	io.WriteString(w, head)
 	for k, v := range sa.stor.Gauges() {
-		io.WriteString(w, "<tr><td>Gauge</td><td>"+k+"</td><td>"+strconv.FormatFloat(v, 'f', 10, 64)+"</td></tr>")
+		io.WriteString(w, "<tr><td>Gauge</td><td>"+k+"</td><td>"+strconv.FormatFloat(v, 'f', -1, 64)+"</td></tr>")
 	}
 	for k, v := range sa.stor.Counters() {
 		io.WriteString(w, "<tr><td>Counter</td><td>"+k+"</td><td>"+strconv.FormatInt(v, 10)+"</td></tr>")
