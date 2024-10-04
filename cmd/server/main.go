@@ -1,84 +1,55 @@
 package main
 
 import (
-	"errors"
-	"fmt"
+	"github.com/go-chi/chi"
 	"github.com/mixailo/go-training-metrics/internal/metrics"
 	"github.com/mixailo/go-training-metrics/internal/storage"
+	"io"
+	"log"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
-func validatePost(r *http.Request) (status int, err error) {
-	if r.Method != http.MethodPost {
-		return http.StatusBadRequest, errors.New("invalid method, only POST is allowed")
-	}
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "text/plain" {
-		return http.StatusBadRequest, errors.New("only text/plain is supported")
-	}
-
-	return
+type MetricsStorage interface {
+	UpdateGauge(name string, value float64)
+	UpdateCounter(name string, value int64)
+	GetGauge(name string) (val float64, ok bool)
+	GetCounter(name string) (val int64, ok bool)
+	Gauges() map[string]float64
+	Counters() map[string]int64
 }
 
-func parseURL(url string) (parsed parsedRequestURL, err error) {
-	// split URL to get fragments
-	fragments := strings.Split(url, "/")
-
-	if len(fragments) != 5 {
-		// simple integrity check (TODO: replace by regular expressions or any other suitable method)
-		return parsed, errors.New("invalid url, must be 5 fragments")
-	}
-
-	if len(fragments[3]) < 1 {
-		// empty name
-		return parsed, errors.New("invalid item name")
-	}
-
-	parsed.itemType = fragments[2]
-	parsed.itemName = fragments[3]
-	parsed.unConvertedValue = fragments[4]
-
-	return
+type storageAware struct {
+	stor MetricsStorage
 }
 
-type parsedRequestURL struct {
-	itemType         string
-	itemName         string
-	unConvertedValue string
+func newStorageAware() *storageAware {
+	s := storage.NewStorage()
+	return &storageAware{stor: &s}
 }
 
-func updateItemValue(w http.ResponseWriter, r *http.Request) {
-	// check request method and content-type
-	status, err := validatePost(r)
-	if err != nil {
-		w.WriteHeader(status)
-		return
-	}
+func (sa *storageAware) updateItemValue(w http.ResponseWriter, r *http.Request) {
+	mName := chi.URLParam(r, "name")
+	mValue := chi.URLParam(r, "value")
+	mType := chi.URLParam(r, "type")
 
-	parsedURL, err := parseURL(r.URL.Path)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	if parsedURL.itemType == metrics.TypeCounter.String() {
+	if mType == metrics.TypeCounter.String() {
 		// counter type increments stored value
-		convertedValue, err := strconv.ParseInt(parsedURL.unConvertedValue, 10, 64)
+		convertedValue, err := strconv.ParseInt(mValue, 10, 64)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		serverStorage.UpdateCounter(parsedURL.itemName, convertedValue)
-	} else if parsedURL.itemType == metrics.TypeGauge.String() {
+
+		sa.stor.UpdateCounter(mName, convertedValue)
+	} else if mType == metrics.TypeGauge.String() {
 		// gauge type replaces stored value
-		convertedValue, err := strconv.ParseFloat(parsedURL.unConvertedValue, 64)
+		convertedValue, err := strconv.ParseFloat(mValue, 64)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		serverStorage.UpdateGauge(parsedURL.itemName, convertedValue)
+		sa.stor.UpdateGauge(mName, convertedValue)
 	} else {
 		// unknown type
 		w.WriteHeader(http.StatusBadRequest)
@@ -87,18 +58,56 @@ func updateItemValue(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-var serverStorage = storage.NewStorage()
+func (sa *storageAware) getItemValue(w http.ResponseWriter, r *http.Request) {
+	mName := chi.URLParam(r, "name")
+	mType := chi.URLParam(r, "type")
+
+	if mType == metrics.TypeCounter.String() {
+		v, ok := sa.stor.GetCounter(mName)
+		if ok {
+			w.WriteHeader(http.StatusOK)
+			io.WriteString(w, strconv.FormatInt(v, 10))
+			return
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+	} else if mType == metrics.TypeGauge.String() {
+		v, ok := sa.stor.GetGauge(mName)
+		if ok {
+			w.WriteHeader(http.StatusOK)
+			io.WriteString(w, strconv.FormatFloat(v, 'f', 10, 64))
+			return
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+	}
+}
+
+func (sa *storageAware) getAllValues(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "text/html")
+	head := `<html><head><title>All Metrics</title></head><body><table>`
+	io.WriteString(w, head)
+	for k, v := range sa.stor.Gauges() {
+		io.WriteString(w, "<tr><td>Gauge</td><td>"+k+"</td><td>"+strconv.FormatFloat(v, 'f', 10, 64)+"</td></tr>")
+	}
+	for k, v := range sa.stor.Counters() {
+		io.WriteString(w, "<tr><td>Counter</td><td>"+k+"</td><td>"+strconv.FormatInt(v, 10)+"</td></tr>")
+	}
+	foot := `</table></body></html>`
+	io.WriteString(w, foot)
+}
 
 func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/update/", updateItemValue)
-	mux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		writer.WriteHeader(http.StatusBadRequest)
-	})
+	sa := newStorageAware()
+	router := chi.NewRouter()
 
-	err := http.ListenAndServe(":8080", mux)
-	if err != nil {
-		fmt.Println(err.Error())
-		panic(err)
-	}
+	router.Post("/update/{type}/{name}/{value}", sa.updateItemValue)
+	router.Get("/value/{type}/{name}", sa.getItemValue)
+	router.Get("/", sa.getAllValues)
+
+	log.Fatal(http.ListenAndServe(":8080", router))
+
 }
