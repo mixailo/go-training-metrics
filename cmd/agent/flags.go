@@ -20,7 +20,7 @@ func (e *endpoint) String() string {
 func (e *endpoint) Set(value string) error {
 	items := strings.Split(value, ":")
 	if len(items) != 2 {
-		return errors.New("Invalid format")
+		return errors.New("invalid format")
 	}
 
 	e.host = items[0]
