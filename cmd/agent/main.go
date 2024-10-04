@@ -9,26 +9,25 @@ import (
 	"time"
 )
 
-const pollInterval = 2
-
-const reportInterval = 10
+var totalPolls int64
+var report metrics.Report
 
 func main() {
+	ParseFlags()
 	lastPoll := time.Now()
 	lastReport := time.Now()
-	var totalPolls int64
-	var report metrics.Report
-	reportEndpoint := reporter.NewServerEndpoint("http", "127.0.0.1", 8080)
+
+	reportEndpoint := reporter.NewServerEndpoint("http", serverEndpoint.host, serverEndpoint.port)
 
 	for {
 		currentTime := time.Now()
-		if (currentTime.Sub(lastPoll).Seconds()) >= pollInterval {
+		if (currentTime.Sub(lastPoll).Milliseconds()) >= pollInterval*1000 {
 			report = poller.PollMetrics()
 			totalPolls += 1
 
 			lastPoll = currentTime
 		}
-		if currentTime.Sub(lastReport).Seconds() >= reportInterval {
+		if currentTime.Sub(lastReport).Milliseconds() >= reportInterval*1000 {
 			report.Add(metrics.TypeCounter, "PollCount", strconv.FormatInt(totalPolls, 10))
 
 			err := reporter.SendReport(report, reportEndpoint)
@@ -38,6 +37,6 @@ func main() {
 			lastReport = currentTime
 			totalPolls = 0
 		}
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
 }

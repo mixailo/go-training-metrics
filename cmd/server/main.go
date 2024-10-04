@@ -101,6 +101,7 @@ func (sa *storageAware) getAllValues(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	ParseFlags()
 	sa := newStorageAware()
 	router := chi.NewRouter()
 
@@ -108,6 +109,6 @@ func main() {
 	router.Get("/value/{type}/{name}", sa.getItemValue)
 	router.Get("/", sa.getAllValues)
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(serverEndpoint.String(), router))
 
 }

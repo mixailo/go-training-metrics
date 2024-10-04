@@ -10,21 +10,21 @@ import (
 )
 
 type ServerEndpoint struct {
-	scheme string
-	host   string
-	port   int
+	Scheme string
+	Host   string
+	Port   int
 }
 
 func NewServerEndpoint(scheme string, host string, port int) ServerEndpoint {
 	return ServerEndpoint{
-		scheme: scheme,
-		host:   host,
-		port:   port,
+		Scheme: scheme,
+		Host:   host,
+		Port:   port,
 	}
 }
 
 func (se *ServerEndpoint) String() string {
-	return se.scheme + "://" + se.host + ":" + strconv.Itoa(se.port)
+	return se.Scheme + "://" + se.Host + ":" + strconv.Itoa(se.Port)
 }
 
 func (se *ServerEndpoint) CreateURL(path string) string {
@@ -44,8 +44,8 @@ func SendReport(report metrics.Report, endpoint ServerEndpoint) (err error) {
 func sendReportMetric(metric metrics.Data, endpoint ServerEndpoint) error {
 	reportURLPath := endpoint.CreateURL(reportPath(metric))
 	response, err := http.Post(reportURLPath, "text/plain", nil)
-	if err != nil {
-		response.Body.Close()
+	if err == nil {
+		defer response.Body.Close()
 	}
 
 	return err
