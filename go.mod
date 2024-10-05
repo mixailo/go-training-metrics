@@ -3,6 +3,7 @@ module github.com/mixailo/go-training-metrics
 go 1.22.6
 
 require (
+	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/go-chi/chi v1.5.5
 	github.com/stretchr/testify v1.9.0
 )

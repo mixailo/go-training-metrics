@@ -101,7 +101,8 @@ func (sa *storageAware) getAllValues(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	ParseFlags()
+	serverConf := InitConfig()
+	log.Printf("Starting server at %s:%d", serverConf.Endpoint.Host, serverConf.Endpoint.Port)
 	sa := newStorageAware()
 	router := chi.NewRouter()
 
@@ -109,6 +110,5 @@ func main() {
 	router.Get("/value/{type}/{name}", sa.getItemValue)
 	router.Get("/", sa.getAllValues)
 
-	log.Fatal(http.ListenAndServe(serverEndpoint.String(), router))
-
+	log.Fatal(http.ListenAndServe(serverConf.Endpoint.String(), router))
 }

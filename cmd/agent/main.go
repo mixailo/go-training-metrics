@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/mixailo/go-training-metrics/internal/metrics"
 	"github.com/mixailo/go-training-metrics/internal/poller"
 	"github.com/mixailo/go-training-metrics/internal/reporter"
@@ -13,21 +14,24 @@ var totalPolls int64
 var report metrics.Report
 
 func main() {
-	ParseFlags()
+	agentConf := InitConfig()
+
+	fmt.Println(agentConf)
+
 	lastPoll := time.Now()
 	lastReport := time.Now()
 
-	reportEndpoint := reporter.NewServerEndpoint("http", serverEndpoint.host, serverEndpoint.port)
+	reportEndpoint := reporter.NewServerEndpoint("http", agentConf.Endpoint.Host, agentConf.Endpoint.Port)
 
 	for {
 		currentTime := time.Now()
-		if (currentTime.Sub(lastPoll).Milliseconds()) >= pollInterval*1000 {
+		if (currentTime.Sub(lastPoll).Milliseconds()) >= agentConf.PollInterval*1000 {
 			report = poller.PollMetrics()
 			totalPolls += 1
 
 			lastPoll = currentTime
 		}
-		if currentTime.Sub(lastReport).Milliseconds() >= reportInterval*1000 {
+		if currentTime.Sub(lastReport).Milliseconds() >= agentConf.ReportInterval*1000 {
 			report.Add(metrics.TypeCounter, "PollCount", strconv.FormatInt(totalPolls, 10))
 
 			err := reporter.SendReport(report, reportEndpoint)
