@@ -71,7 +71,6 @@ func EnvConfig(defCfg Config) (cfg Config) {
 	cfg = defCfg
 
 	v, ok := os.LookupEnv("REPORT_INTERVAL")
-	fmt.Println(v, ok)
 	if ok {
 		interval, err := strconv.ParseInt(v, 10, 32)
 		if err != nil {
@@ -81,7 +80,6 @@ func EnvConfig(defCfg Config) (cfg Config) {
 	}
 
 	v, ok = os.LookupEnv("POLL_INTERVAL")
-	fmt.Println(v, ok)
 	if ok {
 		interval, err := strconv.ParseInt(v, 10, 32)
 		if err != nil {
@@ -91,7 +89,6 @@ func EnvConfig(defCfg Config) (cfg Config) {
 	}
 
 	v, ok = os.LookupEnv("ADDRESS")
-	fmt.Println(v, ok)
 	if ok {
 		// parse env vars
 		err := cfg.Endpoint.Parse(v)
@@ -101,16 +98,6 @@ func EnvConfig(defCfg Config) (cfg Config) {
 	}
 
 	return cfg
-}
-
-func IsFlagPassed(name string) bool {
-	found := false
-	flag.Visit(func(f *flag.Flag) {
-		if f.Name == name {
-			found = true
-		}
-	})
-	return found
 }
 
 func InitConfig() Config {
