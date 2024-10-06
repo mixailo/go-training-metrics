@@ -111,16 +111,20 @@ func GracefulShutdown() {
 	}()
 }
 
-func main() {
-	GracefulShutdown()
-	serverConf := InitConfig()
-	log.Printf("Starting server at %s:%d", serverConf.Endpoint.Host, serverConf.Endpoint.Port)
-	sa := newStorageAware(storage.NewStorage())
+func NewHandler(sa *storageAware) http.Handler {
 	router := chi.NewRouter()
 
 	router.Post("/update/{type}/{name}/{value}", sa.updateItemValue)
 	router.Get("/value/{type}/{name}", sa.getItemValue)
 	router.Get("/", sa.getAllValues)
 
-	log.Fatal(http.ListenAndServe(serverConf.Endpoint.String(), router))
+	return router
+}
+
+func main() {
+	GracefulShutdown()
+	serverConf := InitConfig()
+	log.Printf("Starting server at %s:%d", serverConf.Endpoint.Host, serverConf.Endpoint.Port)
+	sa := newStorageAware(storage.NewStorage())
+	log.Fatal(http.ListenAndServe(serverConf.Endpoint.String(), NewHandler(sa)))
 }
