@@ -7,6 +7,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
 )
 
@@ -99,7 +101,18 @@ func (sa *storageAware) getAllValues(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, foot)
 }
 
+func GracefulShutdown() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		<-c
+		log.Println("Shutting down gracefully")
+		os.Exit(0)
+	}()
+}
+
 func main() {
+	GracefulShutdown()
 	serverConf := InitConfig()
 	log.Printf("Starting server at %s:%d", serverConf.Endpoint.Host, serverConf.Endpoint.Port)
 	sa := newStorageAware(storage.NewStorage())
