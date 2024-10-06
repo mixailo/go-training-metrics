@@ -28,8 +28,8 @@ func (m *MemStorage) GetCounter(name string) (val int64, ok bool) {
 	return
 }
 
-func NewStorage() MemStorage {
-	return MemStorage{gauges: make(map[string]float64), counters: make(map[string]int64)}
+func NewStorage() *MemStorage {
+	return &MemStorage{gauges: make(map[string]float64), counters: make(map[string]int64)}
 }
 
 func (m *MemStorage) Gauges() map[string]float64 {

@@ -142,7 +142,7 @@ func TestEnvConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			os.Clearenv()
+			os.Unsetenv("ADDRESS")
 			for k, v := range tt.args {
 				assert.NoError(t, os.Setenv(k, v))
 			}

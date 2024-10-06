@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/mixailo/go-training-metrics/internal/metrics"
-	"github.com/mixailo/go-training-metrics/internal/poller"
-	"github.com/mixailo/go-training-metrics/internal/reporter"
+	"github.com/mixailo/go-training-metrics/internal/service/metrics"
+	"github.com/mixailo/go-training-metrics/internal/service/poller"
+	"github.com/mixailo/go-training-metrics/internal/service/reporter"
 	"log"
 	"strconv"
 	"time"

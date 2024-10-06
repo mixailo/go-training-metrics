@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-var storage MemStorage
+var storage *MemStorage
 
 func init() {
 	storage = NewStorage()
@@ -120,5 +120,5 @@ func TestMemStorage_UpdateGauge(t *testing.T) {
 
 func TestNewStorage(t *testing.T) {
 	localStorage := NewStorage()
-	assert.IsType(t, MemStorage{}, localStorage)
+	assert.IsType(t, &MemStorage{}, localStorage)
 }

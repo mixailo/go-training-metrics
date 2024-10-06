@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/go-chi/chi"
-	"github.com/mixailo/go-training-metrics/internal/metrics"
-	"github.com/mixailo/go-training-metrics/internal/storage"
+	"github.com/mixailo/go-training-metrics/internal/repository/storage"
+	"github.com/mixailo/go-training-metrics/internal/service/metrics"
 	"io"
 	"log"
 	"net/http"
@@ -23,9 +23,8 @@ type storageAware struct {
 	stor MetricsStorage
 }
 
-func newStorageAware() *storageAware {
-	s := storage.NewStorage()
-	return &storageAware{stor: &s}
+func newStorageAware(metricsStorage MetricsStorage) *storageAware {
+	return &storageAware{stor: metricsStorage}
 }
 
 func (sa *storageAware) updateItemValue(w http.ResponseWriter, r *http.Request) {
@@ -103,7 +102,7 @@ func (sa *storageAware) getAllValues(w http.ResponseWriter, r *http.Request) {
 func main() {
 	serverConf := InitConfig()
 	log.Printf("Starting server at %s:%d", serverConf.Endpoint.Host, serverConf.Endpoint.Port)
-	sa := newStorageAware()
+	sa := newStorageAware(storage.NewStorage())
 	router := chi.NewRouter()
 
 	router.Post("/update/{type}/{name}/{value}", sa.updateItemValue)

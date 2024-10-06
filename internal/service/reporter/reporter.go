@@ -1,7 +1,7 @@
 package reporter
 
 import (
-	"github.com/mixailo/go-training-metrics/internal/metrics"
+	"github.com/mixailo/go-training-metrics/internal/service/metrics"
 	"log"
 	"net/http"
 	"net/url"
