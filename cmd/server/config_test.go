@@ -1,41 +1,42 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEndpoint_Parse(t *testing.T) {
 	tests := []struct {
 		name            string
-		desiredEndpoint Endpoint
+		desiredEndpoint endpoint
 		input           string
 		wantErr         bool
 	}{
 		{
 			"localhost",
-			Endpoint{
-				Host: "localhost",
-				Port: 8080,
+			endpoint{
+				host: "localhost",
+				port: 8080,
 			},
 			"localhost:8080",
 			false,
 		},
 		{
 			"127.0.0.1",
-			Endpoint{
-				Host: "127.0.0.1",
-				Port: 8080,
+			endpoint{
+				host: "127.0.0.1",
+				port: 8080,
 			},
 			"127.0.0.1:8080",
 			false,
 		},
 		{
 			"127.0.0.1",
-			Endpoint{
-				Host: "localhost",
-				Port: 8080,
+			endpoint{
+				host: "localhost",
+				port: 8080,
 			},
 			"127.0.0.18080",
 			true,
@@ -43,11 +44,11 @@ func TestEndpoint_Parse(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ep := Endpoint{}
+			ep := endpoint{}
 			if tt.wantErr {
-				assert.Error(t, tt.desiredEndpoint.Parse(tt.input))
+				assert.Error(t, tt.desiredEndpoint.parse(tt.input))
 			} else {
-				assert.NoError(t, ep.Parse(tt.input))
+				assert.NoError(t, ep.parse(tt.input))
 				assert.EqualValues(t, tt.desiredEndpoint, ep)
 			}
 		})
@@ -57,39 +58,39 @@ func TestEndpoint_Parse(t *testing.T) {
 func TestEndpoint_String(t *testing.T) {
 	tests := []struct {
 		name   string
-		fields Endpoint
+		fields endpoint
 		want   string
 	}{
 		{
 			"localhost:8080",
-			Endpoint{
-				Host: "localhost",
-				Port: 8080,
+			endpoint{
+				host: "localhost",
+				port: 8080,
 			},
 			"localhost:8080",
 		},
 		{
 			"localhost",
-			Endpoint{
-				Host: "localhost",
-				Port: 80,
+			endpoint{
+				host: "localhost",
+				port: 80,
 			},
 			"localhost:80",
 		},
 		{
 			"127.0.0.1:80",
-			Endpoint{
-				Host: "127.0.0.1",
-				Port: 80,
+			endpoint{
+				host: "127.0.0.1",
+				port: 80,
 			},
 			"127.0.0.1:80",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := &Endpoint{
-				Host: tt.fields.Host,
-				Port: tt.fields.Port,
+			e := &endpoint{
+				host: tt.fields.host,
+				port: tt.fields.port,
 			}
 			assert.Equal(t, tt.want, e.String())
 		})
@@ -102,17 +103,17 @@ func TestEnvConfig(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		wantCfg Config
+		wantCfg config
 	}{
 		{
 			"default",
 			map[string]string{
 				"ADDRESS": "localhost:8080",
 			},
-			Config{
-				Endpoint: Endpoint{
-					Host: "localhost",
-					Port: 8080,
+			config{
+				endpoint: endpoint{
+					host: "localhost",
+					port: 8080,
 				},
 			},
 		},
@@ -121,20 +122,20 @@ func TestEnvConfig(t *testing.T) {
 			map[string]string{
 				"ADDRESS": "127.0.0.1:80",
 			},
-			Config{
-				Endpoint: Endpoint{
-					Host: "127.0.0.1",
-					Port: 80,
+			config{
+				endpoint: endpoint{
+					host: "127.0.0.1",
+					port: 80,
 				},
 			},
 		},
 		{
 			"empty vars",
 			map[string]string{},
-			Config{
-				Endpoint: Endpoint{
-					Host: "localhost",
-					Port: 8080,
+			config{
+				endpoint: endpoint{
+					host: "localhost",
+					port: 8080,
 				},
 			},
 		},
@@ -146,7 +147,7 @@ func TestEnvConfig(t *testing.T) {
 			for k, v := range tt.args {
 				assert.NoError(t, os.Setenv(k, v))
 			}
-			assert.EqualValues(t, tt.wantCfg, EnvConfig(DefaultConfig()))
+			assert.EqualValues(t, tt.wantCfg, envConfig(defaultConfig()))
 		})
 	}
 }

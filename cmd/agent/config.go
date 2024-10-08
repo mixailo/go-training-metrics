@@ -10,12 +10,12 @@ import (
 	"strings"
 )
 
-type Endpoint struct {
+type endpoint struct {
 	Host string
 	Port int
 }
 
-func (e *Endpoint) Parse(value string) error {
+func (e *endpoint) parse(value string) error {
 	vals := strings.Split(value, ":")
 
 	if len(vals) != 2 {
@@ -33,17 +33,17 @@ func (e *Endpoint) Parse(value string) error {
 	return nil
 }
 
-type Config struct {
-	Endpoint       Endpoint
-	PollInterval   int64
-	ReportInterval int64
+type config struct {
+	endpoint       endpoint
+	pollInterval   int64
+	reportInterval int64
 }
 
-func (e *Endpoint) String() string {
+func (e *endpoint) String() string {
 	return fmt.Sprintf("%s:%d", e.Host, e.Port)
 }
 
-func (e *Endpoint) Set(value string) error {
+func (e *endpoint) Set(value string) error {
 	items := strings.Split(value, ":")
 	if len(items) != 2 {
 		return errors.New("invalid format")
@@ -55,19 +55,19 @@ func (e *Endpoint) Set(value string) error {
 	return nil
 }
 
-func DefaultConfig() (cfg Config) {
-	cfg = Config{
-		Endpoint: Endpoint{
+func defaultConfig() (cfg config) {
+	cfg = config{
+		endpoint: endpoint{
 			Host: "localhost",
 			Port: 8080,
 		},
-		PollInterval:   2,
-		ReportInterval: 10,
+		pollInterval:   2,
+		reportInterval: 10,
 	}
 	return
 }
 
-func EnvConfig(defCfg Config) (cfg Config) {
+func envConfig(defCfg config) (cfg config) {
 	cfg = defCfg
 
 	v, ok := os.LookupEnv("REPORT_INTERVAL")
@@ -76,7 +76,7 @@ func EnvConfig(defCfg Config) (cfg Config) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		cfg.ReportInterval = interval
+		cfg.reportInterval = interval
 	}
 
 	v, ok = os.LookupEnv("POLL_INTERVAL")
@@ -85,13 +85,13 @@ func EnvConfig(defCfg Config) (cfg Config) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		cfg.PollInterval = interval
+		cfg.pollInterval = interval
 	}
 
 	v, ok = os.LookupEnv("ADDRESS")
 	if ok {
 		// parse env vars
-		err := cfg.Endpoint.Parse(v)
+		err := cfg.endpoint.parse(v)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -100,14 +100,14 @@ func EnvConfig(defCfg Config) (cfg Config) {
 	return cfg
 }
 
-func InitConfig() Config {
-	return ArgsConfig(EnvConfig(DefaultConfig()))
+func initConfig() config {
+	return argsConfig(envConfig(defaultConfig()))
 }
 
-func ArgsConfig(cfg Config) Config {
-	flag.Var(&cfg.Endpoint, "a", "server endpoint")
-	flag.Int64Var(&cfg.PollInterval, "p", cfg.PollInterval, "poll interval")
-	flag.Int64Var(&cfg.ReportInterval, "r", cfg.ReportInterval, "report interval")
+func argsConfig(cfg config) config {
+	flag.Var(&cfg.endpoint, "a", "server endpoint")
+	flag.Int64Var(&cfg.pollInterval, "p", cfg.pollInterval, "poll interval")
+	flag.Int64Var(&cfg.reportInterval, "r", cfg.reportInterval, "report interval")
 
 	flag.Parse()
 	return cfg

@@ -1,8 +1,9 @@
 package poller
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPollMetrics(t *testing.T) {

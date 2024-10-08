@@ -1,18 +1,20 @@
 package main
 
 import (
-	"github.com/go-chi/chi"
-	"github.com/mixailo/go-training-metrics/internal/repository/storage"
-	"github.com/mixailo/go-training-metrics/internal/service/metrics"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
+
+	"github.com/go-chi/chi"
+
+	"github.com/mixailo/go-training-metrics/internal/repository/storage"
+	"github.com/mixailo/go-training-metrics/internal/service/metrics"
 )
 
-type MetricsStorage interface {
+type metricsStorage interface {
 	UpdateGauge(name string, value float64)
 	UpdateCounter(name string, value int64)
 	GetGauge(name string) (val float64, ok bool)
@@ -22,10 +24,10 @@ type MetricsStorage interface {
 }
 
 type storageAware struct {
-	stor MetricsStorage
+	stor metricsStorage
 }
 
-func newStorageAware(metricsStorage MetricsStorage) *storageAware {
+func newStorageAware(metricsStorage metricsStorage) *storageAware {
 	return &storageAware{stor: metricsStorage}
 }
 
@@ -101,7 +103,7 @@ func (sa *storageAware) getAllValues(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, foot)
 }
 
-func GracefulShutdown() {
+func gracefulShutdown() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
@@ -111,7 +113,7 @@ func GracefulShutdown() {
 	}()
 }
 
-func NewHandler(sa *storageAware) http.Handler {
+func newHandler(sa *storageAware) http.Handler {
 	router := chi.NewRouter()
 
 	router.Post("/update/{type}/{name}/{value}", sa.updateItemValue)
@@ -122,9 +124,9 @@ func NewHandler(sa *storageAware) http.Handler {
 }
 
 func main() {
-	GracefulShutdown()
-	serverConf := InitConfig()
-	sa := newStorageAware(storage.NewStorage())
-	log.Printf("Starting server at %s:%d", serverConf.Endpoint.Host, serverConf.Endpoint.Port)
-	log.Fatal(http.ListenAndServe(serverConf.Endpoint.String(), NewHandler(sa)))
+	gracefulShutdown()
+	serverConf := initConfig()
+	sa := newStorageAware(storage.NewMemStorage())
+	log.Printf("Starting server at %s:%d", serverConf.endpoint.host, serverConf.endpoint.port)
+	log.Fatal(http.ListenAndServe(serverConf.endpoint.String(), newHandler(sa)))
 }

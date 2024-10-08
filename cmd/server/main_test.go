@@ -1,13 +1,15 @@
 package main
 
 import (
-	"github.com/go-resty/resty/v2"
-	"github.com/mixailo/go-training-metrics/internal/repository/storage"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/go-resty/resty/v2"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/mixailo/go-training-metrics/internal/repository/storage"
 )
 
 func Test_newStorageAware(t *testing.T) {
@@ -19,13 +21,13 @@ func Test_newStorageAware(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.IsType(t, newStorageAware(storage.NewStorage()), &storageAware{})
+			assert.IsType(t, newStorageAware(storage.NewMemStorage()), &storageAware{})
 		})
 	}
 }
 
 func Test_storageAware_getAllValues(t *testing.T) {
-	sa := newStorageAware(storage.NewStorage())
+	sa := newStorageAware(storage.NewMemStorage())
 
 	server := httptest.NewServer(http.HandlerFunc(sa.getAllValues))
 
@@ -65,7 +67,7 @@ func Test_storageAware_getAllValues(t *testing.T) {
 func Test_storageAware_getItemValue(t *testing.T) {
 
 	type fields struct {
-		stor MetricsStorage
+		stor metricsStorage
 	}
 	type args struct {
 		w http.ResponseWriter
@@ -90,7 +92,7 @@ func Test_storageAware_getItemValue(t *testing.T) {
 
 func Test_storageAware_updateItemValue(t *testing.T) {
 	type fields struct {
-		stor MetricsStorage
+		stor metricsStorage
 	}
 	type args struct {
 		w http.ResponseWriter

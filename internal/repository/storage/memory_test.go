@@ -8,7 +8,7 @@ import (
 var storage *MemStorage
 
 func init() {
-	storage = NewStorage()
+	storage = NewMemStorage()
 	storage.UpdateCounter("test_counter", 1)
 	storage.UpdateGauge("test_gauge", 1)
 }
@@ -119,6 +119,6 @@ func TestMemStorage_UpdateGauge(t *testing.T) {
 }
 
 func TestNewStorage(t *testing.T) {
-	localStorage := NewStorage()
+	localStorage := NewMemStorage()
 	assert.IsType(t, &MemStorage{}, localStorage)
 }

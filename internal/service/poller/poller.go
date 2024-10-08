@@ -1,10 +1,11 @@
 package poller
 
 import (
-	"github.com/mixailo/go-training-metrics/internal/service/metrics"
 	"math/rand/v2"
 	"runtime"
 	"strconv"
+
+	"github.com/mixailo/go-training-metrics/internal/service/metrics"
 )
 
 func PollMetrics() metrics.Report {

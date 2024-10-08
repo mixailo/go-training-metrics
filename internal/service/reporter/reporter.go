@@ -1,12 +1,13 @@
 package reporter
 
 import (
-	"github.com/mixailo/go-training-metrics/internal/service/metrics"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/mixailo/go-training-metrics/internal/service/metrics"
 )
 
 type ServerEndpoint struct {

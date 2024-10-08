@@ -1,9 +1,11 @@
 package reporter
 
 import (
-	"github.com/mixailo/go-training-metrics/internal/service/metrics"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/mixailo/go-training-metrics/internal/service/metrics"
 )
 
 func TestNewServerEndpoint(t *testing.T) {
