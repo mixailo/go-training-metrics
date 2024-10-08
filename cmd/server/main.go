@@ -124,7 +124,7 @@ func NewHandler(sa *storageAware) http.Handler {
 func main() {
 	GracefulShutdown()
 	serverConf := InitConfig()
-	log.Printf("Starting server at %s:%d", serverConf.Endpoint.Host, serverConf.Endpoint.Port)
 	sa := newStorageAware(storage.NewStorage())
+	log.Printf("Starting server at %s:%d", serverConf.Endpoint.Host, serverConf.Endpoint.Port)
 	log.Fatal(http.ListenAndServe(serverConf.Endpoint.String(), NewHandler(sa)))
 }
