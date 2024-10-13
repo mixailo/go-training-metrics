@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/mixailo/go-training-metrics/internal/service/logger"
 	"io"
 	"log"
 	"net/http"
@@ -10,9 +9,10 @@ import (
 	"os/signal"
 	"strconv"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 
 	"github.com/mixailo/go-training-metrics/internal/repository/storage"
+	"github.com/mixailo/go-training-metrics/internal/service/logger"
 	"github.com/mixailo/go-training-metrics/internal/service/metrics"
 )
 
