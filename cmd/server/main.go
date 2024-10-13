@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"github.com/mixailo/go-training-metrics/internal/service/logger"
 	"io"
 	"log"
 	"net/http"
@@ -116,6 +118,7 @@ func gracefulShutdown() {
 func newHandler(sa *storageAware) http.Handler {
 	router := chi.NewRouter()
 
+	router.Use(logger.RequestResponseLogger)
 	router.Post("/update/{type}/{name}/{value}", sa.updateItemValue)
 	router.Get("/value/{type}/{name}", sa.getItemValue)
 	router.Get("/", sa.getAllValues)
@@ -126,7 +129,18 @@ func newHandler(sa *storageAware) http.Handler {
 func main() {
 	gracefulShutdown()
 	serverConf := initConfig()
+
+	// init logging
+	if err := logger.Initialize(serverConf.logLevel); err != nil {
+		panic(err)
+	}
+
+	// init storage
 	sa := newStorageAware(storage.NewMemStorage())
-	log.Printf("Starting server at %s:%d", serverConf.endpoint.host, serverConf.endpoint.port)
-	log.Fatal(http.ListenAndServe(serverConf.endpoint.String(), newHandler(sa)))
+
+	logger.Log.Info(fmt.Sprintf("Starting server at %s:%d", serverConf.endpoint.host, serverConf.endpoint.port))
+	err := http.ListenAndServe(serverConf.endpoint.String(), newHandler(sa))
+	if err != nil {
+		logger.Log.Fatal(err.Error())
+	}
 }
