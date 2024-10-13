@@ -17,6 +17,7 @@ type endpoint struct {
 
 type config struct {
 	endpoint endpoint
+	logLevel string
 }
 
 func (e *endpoint) String() string {
@@ -58,8 +59,13 @@ func initConfig() config {
 }
 
 func envConfig(defCfg config) config {
+	var (
+		v  string
+		ok bool
+	)
+
 	cfg := defCfg
-	v, ok := os.LookupEnv("ADDRESS")
+	v, ok = os.LookupEnv("ADDRESS")
 
 	if ok {
 		// parse env vars
@@ -67,6 +73,11 @@ func envConfig(defCfg config) config {
 		if err != nil {
 			log.Fatal(err)
 		}
+	}
+
+	v, ok = os.LookupEnv("LOG_LEVEL")
+	if ok {
+		cfg.logLevel = v
 	}
 
 	return cfg
@@ -78,11 +89,13 @@ func defaultConfig() (cfg config) {
 			host: "localhost",
 			port: 8080,
 		},
+		logLevel: "info",
 	}
 }
 
 func argsConfig(cfg config) config {
 	flag.Var(&cfg.endpoint, "a", "server endpoint [host:port]")
+	flag.StringVar(&cfg.logLevel, "l", "info", "log level [info]")
 	flag.Parse()
 	return cfg
 }
