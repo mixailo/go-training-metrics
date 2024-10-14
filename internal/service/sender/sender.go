@@ -36,7 +36,7 @@ func (se *ServerEndpoint) CreateURL(path string) string {
 
 func SendReport(report metrics.Report, endpoint ServerEndpoint) (err error) {
 	for _, metric := range report.All() {
-		logger.Log.Info("send report", zap.String("metric", metric.String()), zap.String("endpoint", endpoint.String()))
+		logger.Log.Info("send report", zap.String("metric", metric.String()))
 		err = sendReportMetric(metric, endpoint)
 		if err != nil {
 			logger.Log.Info("error", zap.Error(err))

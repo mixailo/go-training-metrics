@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/mixailo/go-training-metrics/internal/service/logger"
 	"log"
 	"os"
 	"os/signal"
@@ -25,8 +26,17 @@ func gracefulShutdown() {
 	}()
 }
 
+var agentConf config
+
+func init() {
+	agentConf = initConfig()
+	if err := logger.Initialize(agentConf.logLevel); err != nil {
+		panic(err)
+	}
+	logger.Log.Info("agent start")
+}
+
 func main() {
-	agentConf := initConfig()
 	gracefulShutdown()
 
 	lastPoll := time.Now()

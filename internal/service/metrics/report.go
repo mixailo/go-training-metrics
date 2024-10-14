@@ -1,8 +1,8 @@
 package metrics
 
 import (
-	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 )
 
@@ -54,12 +54,7 @@ func (m *Metrics) IsReadable() bool {
 }
 
 func (m *Metrics) String() string {
-	decoded, err := json.Marshal(m)
-	if err != nil {
-		return ""
-	} else {
-		return string(decoded)
-	}
+	return fmt.Sprintf("%s: %s %s %s", m.ID, m.MType, *m.Delta, *m.Value)
 }
 
 func NewReport() Report {
