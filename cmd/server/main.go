@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"io"
-	"log"
 	"net/http"
-	"os"
-	"os/signal"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -205,37 +202,26 @@ func (sa *storageAware) getAllValues(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, foot)
 }
 
-func gracefulShutdown() {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		<-c
-		log.Println("Shutting down gracefully")
-		os.Exit(0)
-	}()
-}
-
 func newHandler(sa *storageAware) http.Handler {
 	router := chi.NewRouter()
 
 	router.Use(logger.RequestResponseLogger)
-	router.Post("/update", sa.update)
-	router.Post("/value/", sa.value)
 	router.Post("/update/{type}/{name}/{value}", sa.updateItemValue)
 	router.Get("/value/{type}/{name}", sa.getItemValue)
+	router.Post("/update", sa.update)
+	router.Post("/value/", sa.value)
 	router.Get("/", sa.getAllValues)
 
 	return router
 }
 
 func main() {
-	serverConf := initConfig()
-
 	// init logging
+	serverConf := initConfig()
 	if err := logger.Initialize(serverConf.logLevel); err != nil {
 		panic(err)
 	}
-
+	logger.Log.Info("server start")
 	// init storage
 	sa := newStorageAware(storage.NewMemStorage())
 
