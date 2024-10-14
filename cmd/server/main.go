@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -63,6 +64,94 @@ func (sa *storageAware) updateItemValue(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 }
 
+func (sa *storageAware) value(w http.ResponseWriter, r *http.Request) {
+	dec := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+	var reqData metrics.Metrics
+	var resData metrics.Metrics
+
+	err := dec.Decode(&reqData)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if !reqData.IsReadable() {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if reqData.MType == metrics.TypeCounter.String() {
+		// counter type increments stored value
+		updated, ok := sa.stor.GetCounter(reqData.ID)
+		if ok {
+			newValue := float64(updated)
+			resData = metrics.Metrics{
+				ID:    reqData.ID,
+				MType: reqData.MType,
+				Value: &newValue,
+			}
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+	} else if reqData.MType == metrics.TypeGauge.String() {
+		updated, ok := sa.stor.GetGauge(reqData.ID)
+		if ok {
+			resData = metrics.Metrics{
+				ID:    reqData.ID,
+				MType: reqData.MType,
+				Value: &updated,
+			}
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+	} else {
+		// unknown type
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	enc := json.NewEncoder(w)
+	enc.Encode(resData)
+}
+
+func (sa *storageAware) update(w http.ResponseWriter, r *http.Request) {
+	dec := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+	var data metrics.Metrics
+
+	err := dec.Decode(&data)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if !data.IsWritable() {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if data.MType == metrics.TypeCounter.String() {
+		// counter type increments stored value
+		sa.stor.UpdateCounter(data.ID, *data.Delta)
+	} else if data.MType == metrics.TypeGauge.String() {
+		fmt.Println(data)
+		sa.stor.UpdateGauge(data.ID, *data.Value)
+	} else {
+		// unknown type
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	enc := json.NewEncoder(w)
+	enc.Encode(data)
+}
+
 func (sa *storageAware) getItemValue(w http.ResponseWriter, r *http.Request) {
 	mName := chi.URLParam(r, "name")
 	mType := chi.URLParam(r, "type")
@@ -119,6 +208,8 @@ func newHandler(sa *storageAware) http.Handler {
 	router := chi.NewRouter()
 
 	router.Use(logger.RequestResponseLogger)
+	router.Post("/update", sa.update)
+	router.Post("/value", sa.value)
 	router.Post("/update/{type}/{name}/{value}", sa.updateItemValue)
 	router.Get("/value/{type}/{name}", sa.getItemValue)
 	router.Get("/", sa.getAllValues)

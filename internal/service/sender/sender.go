@@ -1,9 +1,10 @@
-package reporter
+package sender
 
 import (
+	"bytes"
+	"encoding/json"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -42,9 +43,19 @@ func SendReport(report metrics.Report, endpoint ServerEndpoint) (err error) {
 	return
 }
 
-func sendReportMetric(metric metrics.Data, endpoint ServerEndpoint) error {
-	reportURLPath := endpoint.CreateURL(reportPath(metric))
-	response, err := http.Post(reportURLPath, "text/plain", nil)
+func sendReportMetric(metric metrics.Metrics, endpoint ServerEndpoint) error {
+	var buf bytes.Buffer
+
+	// encode request body
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(metric)
+	if err != nil {
+		return err
+	}
+
+	// send request
+	reportURLPath := endpoint.CreateURL(reportPath())
+	response, err := http.Post(reportURLPath, "application/json", &buf)
 	if err == nil {
 		defer response.Body.Close()
 	}
@@ -52,7 +63,7 @@ func sendReportMetric(metric metrics.Data, endpoint ServerEndpoint) error {
 	return err
 }
 
-func reportPath(metric metrics.Data) (result string) {
-	result = "/update/" + metric.CounterType.String() + "/" + url.QueryEscape(metric.Name) + "/" + url.QueryEscape(metric.Value)
+func reportPath() (result string) {
+	result = "/update"
 	return
 }

@@ -110,7 +110,7 @@ func Test_storageAware_updateItemValue(t *testing.T) {
 			sa := &storageAware{
 				stor: tt.fields.stor,
 			}
-			sa.updateItemValue(tt.args.w, tt.args.r)
+			sa.update(tt.args.w, tt.args.r)
 		})
 	}
 }

@@ -4,17 +4,17 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strconv"
 	"time"
 
 	"github.com/mixailo/go-training-metrics/internal/service/metrics"
 	"github.com/mixailo/go-training-metrics/internal/service/poller"
-	"github.com/mixailo/go-training-metrics/internal/service/reporter"
+	"github.com/mixailo/go-training-metrics/internal/service/sender"
 )
 
 var totalPolls int64
 var report metrics.Report
 
+// yet ungraceful
 func gracefulShutdown() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -32,7 +32,7 @@ func main() {
 	lastPoll := time.Now()
 	lastReport := time.Now()
 
-	reportEndpoint := reporter.NewServerEndpoint("http", agentConf.endpoint.Host, agentConf.endpoint.Port)
+	reportEndpoint := sender.NewServerEndpoint("http", agentConf.endpoint.Host, agentConf.endpoint.Port)
 
 	for {
 		currentTime := time.Now()
@@ -42,8 +42,8 @@ func main() {
 			lastPoll = currentTime
 		}
 		if currentTime.Sub(lastReport).Milliseconds() >= agentConf.reportInterval*1000 {
-			report.Add(metrics.TypeCounter, "PollCount", strconv.FormatInt(totalPolls, 10))
-			err := reporter.SendReport(report, reportEndpoint)
+			report.Add(metrics.Metrics{ID: "PollCount", MType: metrics.TypeCounter.String(), Delta: &totalPolls})
+			err := sender.SendReport(report, reportEndpoint)
 			if err != nil {
 				log.Print(err.Error())
 			}
