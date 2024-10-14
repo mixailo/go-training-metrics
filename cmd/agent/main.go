@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"github.com/mixailo/go-training-metrics/internal/service/logger"
 	"go.uber.org/zap"
-	"log"
-	"os"
-	"os/signal"
 	"time"
 
 	"github.com/mixailo/go-training-metrics/internal/service/metrics"
@@ -17,20 +14,8 @@ import (
 var totalPolls int64
 var report metrics.Report
 
-// yet ungraceful
-func gracefulShutdown() {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		<-c
-		log.Println("Shutting down gracefully")
-		os.Exit(0)
-	}()
-}
-
 func main() {
 	agentConf := initConfig()
-	gracefulShutdown()
 
 	logger.Initialize("info")
 
