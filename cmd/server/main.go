@@ -66,6 +66,7 @@ func (sa *storageAware) updateItemValue(w http.ResponseWriter, r *http.Request) 
 }
 
 func (sa *storageAware) value(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	dec := json.NewDecoder(r.Body)
 	defer r.Body.Close()
 	var reqData metrics.Metrics
@@ -117,29 +118,33 @@ func (sa *storageAware) value(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
+
 	enc := json.NewEncoder(w)
 	enc.Encode(resData)
 }
 
 func (sa *storageAware) update(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	dec := json.NewDecoder(r.Body)
 	defer r.Body.Close()
 	var data metrics.Metrics
 
 	err := dec.Decode(&data)
+
+	reqDataJSON, _ := json.Marshal(data)
+	logger.Log.Info("data", zap.String("request", string(reqDataJSON)))
+
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		logger.Log.Info("error decoding", zap.Error(err))
 		return
 	}
 
 	if !data.IsWritable() {
+		logger.Log.Info("error data not writable")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	reqDataJSON, _ := json.Marshal(data)
-	logger.Log.Info("data", zap.String("request", string(reqDataJSON)))
 
 	if data.MType == metrics.TypeCounter.String() {
 		// counter type increments stored value
@@ -152,7 +157,7 @@ func (sa *storageAware) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
+
 	enc := json.NewEncoder(w)
 	enc.Encode(data)
 }
