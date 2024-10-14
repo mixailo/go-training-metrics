@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -29,6 +30,8 @@ func main() {
 	agentConf := initConfig()
 	gracefulShutdown()
 
+	log.Println("Starting agent")
+	log.Println(fmt.Sprint(agentConf))
 	lastPoll := time.Now()
 	lastReport := time.Now()
 
@@ -36,12 +39,12 @@ func main() {
 	time.Sleep(2 * time.Second)
 	for {
 		currentTime := time.Now()
-		if (currentTime.Sub(lastPoll).Milliseconds()) >= agentConf.pollInterval*1000 {
+		if time.Since(lastPoll) >= time.Duration(agentConf.pollInterval)*time.Second {
 			report = poller.PollMetrics()
 			totalPolls += 1
 			lastPoll = currentTime
 		}
-		if currentTime.Sub(lastReport).Milliseconds() >= agentConf.reportInterval*1000 {
+		if time.Since(lastReport) >= time.Duration(agentConf.reportInterval)*time.Second {
 			report.Add(metrics.Metrics{ID: "PollCount", MType: metrics.TypeCounter.String(), Delta: &totalPolls})
 			err := sender.SendReport(report, reportEndpoint)
 			if err != nil {
