@@ -36,7 +36,7 @@ func main() {
 
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
-	done := make(chan bool)
+	done := make(chan bool, 1)
 
 	go gracefulShutdown(done)
 
