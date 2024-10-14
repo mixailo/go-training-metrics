@@ -228,7 +228,6 @@ func newHandler(sa *storageAware) http.Handler {
 }
 
 func main() {
-	gracefulShutdown()
 	serverConf := initConfig()
 
 	// init logging
