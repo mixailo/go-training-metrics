@@ -114,6 +114,7 @@ func (sa *storageAware) value(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 		// unknown type
+		logger.Log.Info("unknown type", zap.String("type", reqData.MType))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -124,11 +125,11 @@ func (sa *storageAware) value(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sa *storageAware) update(w http.ResponseWriter, r *http.Request) {
+	var data metrics.Metrics
+
 	w.Header().Set("Content-Type", "application/json")
 	dec := json.NewDecoder(r.Body)
 	defer r.Body.Close()
-	var data metrics.Metrics
-
 	err := dec.Decode(&data)
 
 	reqDataJSON, _ := json.Marshal(data)
