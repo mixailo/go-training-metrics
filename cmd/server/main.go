@@ -81,8 +81,9 @@ func (sa *storageAware) value(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	reqDataJson, err := json.Marshal(reqData)
-	logger.Log.Info("data", zap.String("request", string(reqDataJson)))
+	reqDataJSON, _ := json.Marshal(reqData)
+	logger.Log.Info("data", zap.String("request", string(reqDataJSON)))
+	logger.Log.Info("data", zap.String("storage", fmt.Sprint(sa.stor)))
 	if reqData.MType == metrics.TypeCounter.String() {
 		// counter type increments stored value
 		updated, ok := sa.stor.GetCounter(reqData.ID)
