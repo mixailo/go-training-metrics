@@ -208,8 +208,8 @@ func newHandler(sa *storageAware) http.Handler {
 	router.Use(logger.RequestResponseLogger)
 	router.Post("/update/{type}/{name}/{value}", sa.updateItemValue)
 	router.Get("/value/{type}/{name}", sa.getItemValue)
-	//router.Post("/update", sa.update)
-	//router.Post("/value/", sa.value)
+	router.Post("/update", sa.update)
+	router.Post("/value/", sa.value)
 	router.Get("/", sa.getAllValues)
 
 	return router

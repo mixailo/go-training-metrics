@@ -33,8 +33,8 @@ func main() {
 	lastReport := time.Now()
 
 	reportEndpoint := sender.NewServerEndpoint("http", agentConf.endpoint.Host, agentConf.endpoint.Port)
-	time.Sleep(2 * time.Second)
 	for {
+		time.Sleep(100 * time.Millisecond)
 		currentTime := time.Now()
 		if (currentTime.Sub(lastPoll).Milliseconds()) >= agentConf.pollInterval*1000 {
 			report = poller.PollMetrics()
@@ -50,6 +50,6 @@ func main() {
 			lastReport = currentTime
 			totalPolls = 0
 		}
-		time.Sleep(100 * time.Millisecond)
+
 	}
 }
