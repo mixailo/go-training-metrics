@@ -139,7 +139,6 @@ func (sa *storageAware) update(w http.ResponseWriter, r *http.Request) {
 		// counter type increments stored value
 		sa.stor.UpdateCounter(data.ID, *data.Delta)
 	} else if data.MType == metrics.TypeGauge.String() {
-		fmt.Println(data)
 		sa.stor.UpdateGauge(data.ID, *data.Value)
 	} else {
 		// unknown type
@@ -209,7 +208,7 @@ func newHandler(sa *storageAware) http.Handler {
 
 	router.Use(logger.RequestResponseLogger)
 	router.Post("/update", sa.update)
-	router.Post("/value", sa.value)
+	router.Post("/value/", sa.value)
 	router.Post("/update/{type}/{name}/{value}", sa.updateItemValue)
 	router.Get("/value/{type}/{name}", sa.getItemValue)
 	router.Get("/", sa.getAllValues)
