@@ -25,25 +25,25 @@ func gracefulShutdown(done chan bool) {
 	}()
 }
 
-func main() {
-	agentConf := initConfig()
-
+func init() {
 	logger.Initialize("info")
 	logger.Log.Info("Starting agent")
+}
 
+func main() {
+	agentConf := initConfig()
 	reportEndpoint := sender.NewServerEndpoint("http", agentConf.endpoint.Host, agentConf.endpoint.Port)
 
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 	done := make(chan bool)
 
 	go gracefulShutdown(done)
 
+	currentTime := time.Now()
+	lastPoll := currentTime
+	lastReport := currentTime
 	for {
-		currentTime := time.Now()
-		lastPoll := currentTime
-		lastReport := currentTime
-
 		select {
 		case <-done:
 			fmt.Println("Done, shutting down gracefully!")
@@ -52,7 +52,7 @@ func main() {
 			if time.Since(lastPoll) >= time.Duration(agentConf.pollInterval)*time.Second {
 				report = poller.PollMetrics()
 				totalPolls += 1
-				lastPoll = currentTime
+				lastPoll = time.Now()
 			}
 			if time.Since(lastReport) >= time.Duration(agentConf.reportInterval)*time.Second {
 				report.Add(metrics.Metrics{ID: "PollCount", MType: metrics.TypeCounter.String(), Delta: &totalPolls})
@@ -60,7 +60,7 @@ func main() {
 				if err != nil {
 					logger.Log.Info("error", zap.Error(err))
 				}
-				lastReport = currentTime
+				lastReport = time.Now()
 				totalPolls = 0
 			}
 		}
