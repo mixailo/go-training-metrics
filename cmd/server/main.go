@@ -138,6 +138,9 @@ func (sa *storageAware) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	reqDataJSON, _ := json.Marshal(data)
+	logger.Log.Info("data", zap.String("request", string(reqDataJSON)))
+
 	if data.MType == metrics.TypeCounter.String() {
 		// counter type increments stored value
 		sa.stor.UpdateCounter(data.ID, *data.Delta)
