@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/mixailo/go-training-metrics/internal/service/logger"
+	"go.uber.org/zap"
 	"log"
 	"os"
 	"os/signal"
@@ -30,8 +32,10 @@ func main() {
 	agentConf := initConfig()
 	gracefulShutdown()
 
-	log.Println("Starting agent")
-	log.Println(fmt.Sprint(agentConf))
+	logger.Initialize("info")
+
+	logger.Log.Info("Starting agent")
+	logger.Log.Info(fmt.Sprint(agentConf))
 	lastPoll := time.Now()
 	lastReport := time.Now()
 
@@ -48,7 +52,7 @@ func main() {
 			report.Add(metrics.Metrics{ID: "PollCount", MType: metrics.TypeCounter.String(), Delta: &totalPolls})
 			err := sender.SendReport(report, reportEndpoint)
 			if err != nil {
-				log.Print(err.Error())
+				logger.Log.Info("error", zap.Error(err))
 			}
 			lastReport = currentTime
 			totalPolls = 0

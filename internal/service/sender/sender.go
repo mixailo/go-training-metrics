@@ -3,11 +3,12 @@ package sender
 import (
 	"bytes"
 	"encoding/json"
-	"log"
+	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/mixailo/go-training-metrics/internal/service/logger"
 	"github.com/mixailo/go-training-metrics/internal/service/metrics"
 )
 
@@ -35,10 +36,10 @@ func (se *ServerEndpoint) CreateURL(path string) string {
 
 func SendReport(report metrics.Report, endpoint ServerEndpoint) (err error) {
 	for _, metric := range report.All() {
-		log.Println(metric, endpoint)
+		logger.Log.Info("send report", zap.String("metric", metric.String()), zap.String("endpoint", endpoint.String()))
 		err = sendReportMetric(metric, endpoint)
 		if err != nil {
-			log.Println(err)
+			logger.Log.Info("error", zap.Error(err))
 		}
 	}
 	return
