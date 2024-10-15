@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mixailo/go-training-metrics/internal/service/logger"
 	"github.com/mixailo/go-training-metrics/internal/service/metrics"
@@ -37,12 +38,26 @@ func (se *ServerEndpoint) CreateURL(path string) string {
 func SendReport(report metrics.Report, endpoint ServerEndpoint) (err error) {
 	for _, metric := range report.All() {
 		logger.Log.Info("send report", zap.String("metric", metric.String()))
-		err = sendReportMetric(metric, endpoint)
+		err = sendReportMetricWithRetries(metric, endpoint)
 		if err != nil {
 			logger.Log.Info("error", zap.Error(err))
 		}
 	}
 	return
+}
+
+func sendReportMetricWithRetries(metric metrics.Metrics, endpoint ServerEndpoint) (err error) {
+	for i := 0; i < 3; i++ {
+		err = sendReportMetric(metric, endpoint)
+		if err == nil {
+			break
+		} else {
+			logger.Log.Info("error, will retry request after 0.05 secs", zap.Error(err))
+			time.Sleep(50 * time.Millisecond)
+		}
+	}
+
+	return err
 }
 
 func sendReportMetric(metric metrics.Metrics, endpoint ServerEndpoint) error {
