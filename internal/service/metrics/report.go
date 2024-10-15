@@ -54,7 +54,21 @@ func (m *Metrics) IsReadable() bool {
 }
 
 func (m *Metrics) String() string {
-	return fmt.Sprintf("%s: %s %s %s", m.ID, m.MType, *m.Delta, *m.Value)
+	var delta int64
+	var value float64
+
+	if m.Delta == nil {
+		delta = int64(0)
+	} else {
+		delta = *m.Delta
+	}
+	if m.Value == nil {
+		value = float64(0)
+	} else {
+		value = *m.Value
+	}
+
+	return fmt.Sprintf("%s: %s %s %s", m.ID, m.MType, delta, value)
 }
 
 func NewReport() Report {
