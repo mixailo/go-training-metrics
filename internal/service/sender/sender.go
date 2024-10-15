@@ -81,6 +81,6 @@ func sendReportMetric(metric metrics.Metrics, endpoint ServerEndpoint) error {
 }
 
 func reportPath() (result string) {
-	result = "/update"
+	result = "/update/"
 	return
 }
