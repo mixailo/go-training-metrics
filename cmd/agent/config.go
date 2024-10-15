@@ -37,6 +37,7 @@ type config struct {
 	endpoint       endpoint
 	pollInterval   int64
 	reportInterval int64
+	logLevel       string
 }
 
 func (e *endpoint) String() string {
@@ -63,6 +64,7 @@ func defaultConfig() (cfg config) {
 		},
 		pollInterval:   2,
 		reportInterval: 10,
+		logLevel:       "info",
 	}
 	return
 }
@@ -97,6 +99,11 @@ func envConfig(defCfg config) (cfg config) {
 		}
 	}
 
+	v, ok = os.LookupEnv("LOG_LEVEL")
+	if ok {
+		cfg.logLevel = v
+	}
+
 	return cfg
 }
 
@@ -108,6 +115,7 @@ func argsConfig(cfg config) config {
 	flag.Var(&cfg.endpoint, "a", "server endpoint")
 	flag.Int64Var(&cfg.pollInterval, "p", cfg.pollInterval, "poll interval")
 	flag.Int64Var(&cfg.reportInterval, "r", cfg.reportInterval, "report interval")
+	flag.StringVar(&cfg.logLevel, "l", cfg.logLevel, "log level [info]")
 
 	flag.Parse()
 	return cfg
