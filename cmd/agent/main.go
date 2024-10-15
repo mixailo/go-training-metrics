@@ -39,8 +39,8 @@ func init() {
 func main() {
 	gracefulShutdown()
 
-	lastPoll := time.Now()
-	lastReport := time.Now()
+	lastPoll := time.Now().AddDate(0, 0, -1)
+	lastReport := lastPoll
 
 	reportEndpoint := sender.NewServerEndpoint("http", agentConf.endpoint.Host, agentConf.endpoint.Port)
 	for {
