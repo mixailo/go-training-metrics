@@ -85,15 +85,13 @@ func (sa *storageAware) value(w http.ResponseWriter, r *http.Request) {
 	if reqData.MType == metrics.TypeCounter.String() {
 		// counter type increments stored value
 		updated, ok := sa.stor.GetCounter(reqData.ID)
-		if ok {
-			resData = metrics.Metrics{
-				ID:    reqData.ID,
-				MType: reqData.MType,
-				Delta: &updated,
-			}
-		} else {
-			w.WriteHeader(http.StatusNotFound)
-			return
+		if !ok {
+			updated = 0
+		}
+		resData = metrics.Metrics{
+			ID:    reqData.ID,
+			MType: reqData.MType,
+			Delta: &updated,
 		}
 	} else if reqData.MType == metrics.TypeGauge.String() {
 		updated, ok := sa.stor.GetGauge(reqData.ID)
