@@ -28,7 +28,7 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-// check if Metrics is ok for storing
+// IsWritable check if Metrics is ok for storing
 func (m *Metrics) IsWritable() bool {
 	if m.ID == "" {
 		return false
@@ -42,7 +42,7 @@ func (m *Metrics) IsWritable() bool {
 	return false
 }
 
-// check if Metrics is ok for reading
+// IsReadable check if Metrics is ok for reading
 func (m *Metrics) IsReadable() bool {
 	if m.ID == "" {
 		return false
@@ -68,7 +68,7 @@ func (m *Metrics) String() string {
 		value = *m.Value
 	}
 
-	return fmt.Sprintf("%s: %s %s %s", m.ID, m.MType, delta, value)
+	return fmt.Sprintf("%s: %s %d %f", m.ID, m.MType, delta, value)
 }
 
 func NewReport() Report {
