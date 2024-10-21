@@ -111,6 +111,7 @@ func TestEnvConfig(t *testing.T) {
 				"ADDRESS":         "localhost:8080",
 				"REPORT_INTERVAL": "10",
 				"POLL_INTERVAL":   "2",
+				"LOG_LEVEL":       "info",
 			},
 			config{
 				endpoint: endpoint{
@@ -119,6 +120,7 @@ func TestEnvConfig(t *testing.T) {
 				},
 				reportInterval: 10,
 				pollInterval:   2,
+				logLevel:       "info",
 			},
 		},
 		{
@@ -127,6 +129,7 @@ func TestEnvConfig(t *testing.T) {
 				"ADDRESS":         "127.0.0.1:80",
 				"REPORT_INTERVAL": "10",
 				"POLL_INTERVAL":   "2",
+				"LOG_LEVEL":       "info",
 			},
 			config{
 				endpoint: endpoint{
@@ -135,6 +138,7 @@ func TestEnvConfig(t *testing.T) {
 				},
 				reportInterval: 10,
 				pollInterval:   2,
+				logLevel:       "info",
 			},
 		},
 		{
@@ -143,6 +147,7 @@ func TestEnvConfig(t *testing.T) {
 				"ADDRESS":         "127.0.0.1:80",
 				"REPORT_INTERVAL": "100",
 				"POLL_INTERVAL":   "20",
+				"LOG_LEVEL":       "info",
 			},
 			config{
 				endpoint: endpoint{
@@ -151,6 +156,7 @@ func TestEnvConfig(t *testing.T) {
 				},
 				reportInterval: 100,
 				pollInterval:   20,
+				logLevel:       "info",
 			},
 		},
 	}
@@ -160,6 +166,7 @@ func TestEnvConfig(t *testing.T) {
 			os.Unsetenv("ADDRESS")
 			os.Unsetenv("REPORT_INTERVAL")
 			os.Unsetenv("POLL_INTERVAL")
+			os.Unsetenv("LOG_LEVEL")
 			for k, v := range tt.args {
 				assert.NoError(t, os.Setenv(k, v))
 			}

@@ -21,26 +21,19 @@ func TestMemStorage_GetCounter(t *testing.T) {
 		exists bool
 	}{
 		{
-			name:   "existing",
-			index:  "test_counter",
-			value:  1,
-			exists: true,
+			name:  "existing",
+			index: "test_counter",
+			value: 1,
 		},
 		{
-			name:   "not existing",
-			index:  "test_counter_2",
-			value:  1,
-			exists: false,
+			name:  "not existing",
+			index: "test_counter_2",
+			value: 0,
 		},
 	}
 	for _, tt := range tests {
-		value, exists := storage.GetCounter(tt.index)
-		if tt.exists {
-			assert.True(t, exists)
-			assert.Equal(t, tt.value, value)
-		} else {
-			assert.False(t, exists)
-		}
+		value, _ := storage.GetCounter(tt.index)
+		assert.Equal(t, tt.value, value)
 	}
 }
 

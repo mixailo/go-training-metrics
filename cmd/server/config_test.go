@@ -115,6 +115,7 @@ func TestEnvConfig(t *testing.T) {
 					host: "localhost",
 					port: 8080,
 				},
+				logLevel: "info",
 			},
 		},
 		{
@@ -127,6 +128,7 @@ func TestEnvConfig(t *testing.T) {
 					host: "127.0.0.1",
 					port: 80,
 				},
+				logLevel: "info",
 			},
 		},
 		{
@@ -137,6 +139,20 @@ func TestEnvConfig(t *testing.T) {
 					host: "localhost",
 					port: 8080,
 				},
+				logLevel: "info",
+			},
+		},
+		{
+			"log level error",
+			map[string]string{
+				"LOG_LEVEL": "error",
+			},
+			config{
+				endpoint: endpoint{
+					host: "localhost",
+					port: 8080,
+				},
+				logLevel: "error",
 			},
 		},
 	}
