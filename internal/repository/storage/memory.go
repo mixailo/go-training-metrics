@@ -25,6 +25,10 @@ func (m *MemStorage) GetGauge(name string) (val float64, ok bool) {
 
 func (m *MemStorage) GetCounter(name string) (val int64, ok bool) {
 	val, ok = m.counters[name]
+	if !ok {
+		val = 0
+		ok = true
+	}
 	return
 }
 
