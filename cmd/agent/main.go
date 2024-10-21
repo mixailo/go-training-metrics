@@ -28,15 +28,12 @@ func gracefulShutdown() {
 
 var agentConf config
 
-func init() {
+func main() {
 	agentConf = initConfig()
 	if err := logger.Initialize(agentConf.logLevel); err != nil {
 		panic(err)
 	}
 	logger.Log.Info("agent start")
-}
-
-func main() {
 	gracefulShutdown()
 
 	lastPoll := time.Now()

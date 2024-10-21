@@ -52,7 +52,7 @@ func Test_reportPath(t *testing.T) {
 					MType: metrics.TypeCounter.String(),
 				},
 			},
-			wantResult: "/update",
+			wantResult: "/update/",
 		},
 		{
 			name: "gauge",
@@ -63,7 +63,7 @@ func Test_reportPath(t *testing.T) {
 					MType: metrics.TypeCounter.String(),
 				},
 			},
-			wantResult: "/update",
+			wantResult: "/update/",
 		},
 	}
 	for _, tt := range tests {

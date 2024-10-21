@@ -216,16 +216,14 @@ func newHandler(sa *storageAware) http.Handler {
 
 var serverConf config
 
-func init() {
+func main() {
 	// init logging
 	serverConf = initConfig()
 	if err := logger.Initialize(serverConf.logLevel); err != nil {
 		panic(err)
 	}
 	logger.Log.Info("server start")
-}
 
-func main() {
 	// init storage
 	sa := newStorageAware(storage.NewMemStorage())
 

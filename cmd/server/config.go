@@ -79,7 +79,6 @@ func envConfig(defCfg config) config {
 	if ok {
 		cfg.logLevel = v
 	}
-	fmt.Println("envConfig: ", cfg)
 
 	return cfg
 }
@@ -99,6 +98,5 @@ func argsConfig(cfg config) config {
 	flag.StringVar(&cfg.logLevel, "l", "info", "log level [info]")
 	flag.Parse()
 
-	fmt.Println("argsConfig: ", cfg)
 	return cfg
 }
