@@ -86,11 +86,10 @@ func (sa *storageAware) value(w http.ResponseWriter, r *http.Request) {
 		// counter type increments stored value
 		updated, ok := sa.stor.GetCounter(reqData.ID)
 		if ok {
-			newValue := float64(updated)
 			resData = metrics.Metrics{
 				ID:    reqData.ID,
 				MType: reqData.MType,
-				Value: &newValue,
+				Delta: &updated,
 			}
 		} else {
 			w.WriteHeader(http.StatusNotFound)
