@@ -73,10 +73,10 @@ func Test_storageAware_getAllValues(t *testing.T) {
 		req.URL = server.URL + "/"
 
 		resp, err := req.Send()
-		zr, err := gzip.NewReader(resp.RawBody())
-		require.NoError(t, err)
-
 		assert.NoError(t, err, "error making HTTP request")
+		zr, err := gzip.NewReader(resp.RawBody())
+		require.NoError(t, err, "error creating gzip reader")
+
 		assert.Equal(t, http.StatusOK, resp.StatusCode(), "unexpected status code")
 		require.True(t, strings.Contains(resp.Header().Get("Content-Encoding"), "gzip"), "no Content-Encoding header or no gzip in it")
 
