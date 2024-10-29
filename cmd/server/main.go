@@ -3,12 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 
 	"github.com/mixailo/go-training-metrics/internal/repository/storage"
 	"github.com/mixailo/go-training-metrics/internal/service/logger"
@@ -203,6 +203,7 @@ func newHandler(sa *storageAware) http.Handler {
 	router := chi.NewRouter()
 
 	router.Use(logger.RequestResponseLogger)
+	router.Use(gzipMiddleware)
 	router.Post("/update/{type}/{name}/{value}", sa.updateItemValue)
 	router.Get("/value/{type}/{name}", sa.getItemValue)
 	router.Post("/update/", sa.update)
