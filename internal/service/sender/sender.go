@@ -2,6 +2,7 @@ package sender
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"go.uber.org/zap"
 	"net/http"
@@ -63,16 +64,32 @@ func sendReportMetricWithRetries(metric metrics.Metrics, endpoint ServerEndpoint
 func sendReportMetric(metric metrics.Metrics, endpoint ServerEndpoint) error {
 	var buf bytes.Buffer
 
-	// encode request body
-	enc := json.NewEncoder(&buf)
-	err := enc.Encode(metric)
+	// create gzip encoder
+	zl, err := gzip.NewWriterLevel(&buf, gzip.BestSpeed)
 	if err != nil {
 		return err
 	}
 
+	// json-encode request body
+	enc := json.NewEncoder(zl)
+	err = enc.Encode(metric)
+
+	if err != nil {
+		return err
+	}
+	zl.Close()
+
 	// send request
 	reportURLPath := endpoint.CreateURL(reportPath())
-	response, err := http.Post(reportURLPath, "application/json", &buf)
+	request, err := http.NewRequest("POST", reportURLPath, &buf)
+	if err != nil {
+		return err
+	}
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Content-Encoding", "gzip")
+
+	response, err := http.DefaultClient.Do(request)
+
 	if err == nil {
 		defer response.Body.Close()
 	}

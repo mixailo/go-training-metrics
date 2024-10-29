@@ -78,6 +78,7 @@ func RequestResponseLogger(next http.Handler) http.Handler {
 		defer func() {
 			Log.Info("completed HTTP request",
 				zap.Int("code", rw.ResponseData.httpStatus),
+				zap.String("Content-Encoding", r.Header.Get("Content-Encoding")),
 				zap.Duration("duration", time.Since(t1)),
 			)
 		}()
