@@ -185,8 +185,8 @@ func (sa *storageAware) getItemValue(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sa *storageAware) getAllValues(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
 	head := `<html><head><title>All Metrics</title></head><body><table>`
 	io.WriteString(w, head)
 	for k, v := range sa.stor.Gauges() {
@@ -196,14 +196,16 @@ func (sa *storageAware) getAllValues(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "<tr><td>Counter</td><td>"+k+"</td><td>"+strconv.FormatInt(v, 10)+"</td></tr>")
 	}
 	foot := `</table></body></html>`
+
 	io.WriteString(w, foot)
 }
 
 func newHandler(sa *storageAware) http.Handler {
 	router := chi.NewRouter()
 
-	router.Use(logger.RequestResponseLogger)
 	router.Use(gzipMiddleware)
+	router.Use(logger.RequestResponseLogger)
+
 	router.Post("/update/{type}/{name}/{value}", sa.updateItemValue)
 	router.Get("/value/{type}/{name}", sa.getItemValue)
 	router.Post("/update/", sa.update)
