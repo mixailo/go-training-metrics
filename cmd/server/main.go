@@ -64,6 +64,18 @@ func shutdown(c *config) {
 	os.Exit(0)
 }
 
+func storingMiddleware(cnf *config) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			next.ServeHTTP(w, r)
+			err := sa.store(cnf.fileStoragePath)
+			if err != nil {
+				logger.Log.Error(err.Error())
+			}
+		})
+	}
+}
+
 var sa *storageAware
 
 func main() {
@@ -89,15 +101,7 @@ func main() {
 	chiMux := newMux(sa)
 	if serverConf.storeInterval == 0 {
 		logger.Log.Info("will save data to disk immediately")
-		chiMux.Use(func(next http.Handler) http.Handler {
-			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				next.ServeHTTP(w, r)
-				err := sa.store(serverConf.fileStoragePath)
-				if err != nil {
-					logger.Log.Error(err.Error())
-				}
-			})
-		})
+		chiMux.Use(storingMiddleware(&serverConf))
 	} else {
 		logger.Log.Info("will save data to disk periodically", zap.Int64("interval", serverConf.storeInterval))
 		go persistenceTicker(&serverConf)
