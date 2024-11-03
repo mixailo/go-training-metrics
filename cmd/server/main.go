@@ -85,9 +85,6 @@ func (sa *storageAware) value(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	reqDataJSON, _ := json.Marshal(reqData)
-	logger.Log.Info("data", zap.String("request", string(reqDataJSON)))
-	logger.Log.Info("data", zap.String("storage", fmt.Sprint(sa.stor)))
 	if reqData.MType == metrics.TypeCounter.String() {
 		// counter type increments stored value
 		updated, ok := sa.stor.GetCounter(reqData.ID)
@@ -132,17 +129,14 @@ func (sa *storageAware) update(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	err := dec.Decode(&data)
 
-	reqDataJSON, _ := json.Marshal(data)
-	logger.Log.Info("data", zap.String("request", string(reqDataJSON)))
-
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		logger.Log.Info("error decoding", zap.Error(err))
+		logger.Log.Warn("error decoding", zap.Error(err))
 		return
 	}
 
 	if !data.IsWritable() {
-		logger.Log.Info("error data not writable")
+		logger.Log.Warn("error data not writable")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -234,7 +228,7 @@ func (sa *storageAware) store(path string) error {
 	if err != nil {
 		return err
 	}
-	logger.Log.Info("store", zap.String("path", path))
+	logger.Log.Debug("store", zap.String("path", path))
 	return nil
 }
 
@@ -251,7 +245,7 @@ func (sa *storageAware) restore(path string) error {
 		return err
 	}
 
-	logger.Log.Info("restore", zap.String("path", path), zap.Int("len gauges", len(sa.stor.Gauges())), zap.Int("len counters", len(sa.stor.Counters())))
+	logger.Log.Debug("restore", zap.String("path", path), zap.Int("len gauges", len(sa.stor.Gauges())), zap.Int("len counters", len(sa.stor.Counters())))
 	return nil
 }
 
@@ -261,7 +255,7 @@ func gracefulShutdownCatcher(path string) {
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		<-c
-		logger.Log.Info("shutdown signal caught")
+		logger.Log.Debug("shutdown signal caught")
 		shutdown(path)
 	}()
 }
@@ -272,15 +266,12 @@ func persistenceTicker(interval int64, path string) {
 
 	logger.Log.Debug("init persistence ticker", zap.Int64("interval", interval))
 
-	for {
-		select {
-		case <-ticker.C:
-			err := sa.store(path)
-			if err != nil {
-				logger.Log.Error("persistence ticker error", zap.Error(err), zap.String("path", path))
-			} else {
-				logger.Log.Debug("data stored by ticking timer")
-			}
+	for _ = range ticker.C {
+		err := sa.store(path)
+		if err != nil {
+			logger.Log.Error("persistence ticker error", zap.Error(err), zap.String("path", path))
+		} else {
+			logger.Log.Debug("data stored by ticking timer")
 		}
 	}
 }
@@ -328,7 +319,6 @@ func main() {
 	} else {
 		logger.Log.Info("will save data to disk periodically", zap.Int64("interval", serverConf.storeInterval))
 		go persistenceTicker(serverConf.storeInterval, serverConf.fileStoragePath)
-		logger.Log.Info("init ok")
 	}
 
 	err = http.ListenAndServe(serverConf.endpoint.String(), chiMux)
