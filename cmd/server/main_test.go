@@ -67,7 +67,7 @@ func Test_storageAware_getAllValues(t *testing.T) {
 	}
 
 	t.Run("gzip compression", func(t *testing.T) {
-		req := resty.New().SetDebug(true).SetDoNotParseResponse(true).R()
+		req := resty.New().SetDoNotParseResponse(true).R()
 		req.Method = http.MethodGet
 		req.Header.Add("Accept-Encoding", "gzip")
 		req.URL = server.URL + "/"

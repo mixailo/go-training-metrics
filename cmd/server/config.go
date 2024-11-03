@@ -16,8 +16,11 @@ type endpoint struct {
 }
 
 type config struct {
-	endpoint endpoint
-	logLevel string
+	endpoint        endpoint
+	logLevel        string
+	storeInterval   uint64
+	fileStoragePath string
+	doRestoreValues bool
 }
 
 func (e *endpoint) String() string {
@@ -80,6 +83,24 @@ func envConfig(defCfg config) config {
 		cfg.logLevel = v
 	}
 
+	v, ok = os.LookupEnv("FILE_STORAGE_PATH")
+	if ok {
+		cfg.fileStoragePath = v
+	}
+
+	v, ok = os.LookupEnv("STORE_INTERVAL")
+	if ok {
+		vv, err := strconv.ParseUint(v, 10, 64)
+		if err == nil {
+			cfg.storeInterval = vv
+		}
+	}
+
+	v, ok = os.LookupEnv("RESTORE")
+	if ok {
+		cfg.doRestoreValues = v == "true"
+	}
+
 	return cfg
 }
 
@@ -89,13 +110,19 @@ func defaultConfig() (cfg config) {
 			host: "localhost",
 			port: 8080,
 		},
-		logLevel: "info",
+		logLevel:        "info",
+		doRestoreValues: true,
+		storeInterval:   300,
+		fileStoragePath: "values.json",
 	}
 }
 
 func argsConfig(cfg config) config {
 	flag.Var(&cfg.endpoint, "a", "server endpoint [host:port]")
 	flag.StringVar(&cfg.logLevel, "l", "info", "log level [info]")
+	flag.BoolVar(&cfg.doRestoreValues, "r", false, "do restore saved values")
+	flag.StringVar(&cfg.fileStoragePath, "f", cfg.fileStoragePath, "path to storage file")
+	flag.Uint64Var(&cfg.storeInterval, "i", cfg.storeInterval, "storage save interval in seconds")
 	flag.Parse()
 
 	return cfg
