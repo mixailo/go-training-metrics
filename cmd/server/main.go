@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
@@ -22,6 +25,9 @@ type metricsStorage interface {
 	GetCounter(name string) (val int64, ok bool)
 	Gauges() map[string]float64
 	Counters() map[string]int64
+
+	MarshalJSON() ([]byte, error)
+	UnmarshalJSON([]byte) error
 }
 
 type storageAware struct {
@@ -200,7 +206,7 @@ func (sa *storageAware) getAllValues(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, foot)
 }
 
-func newHandler(sa *storageAware) http.Handler {
+func newMux(sa *storageAware) *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Use(gzipMiddleware)
@@ -215,21 +221,117 @@ func newHandler(sa *storageAware) http.Handler {
 	return router
 }
 
-var serverConf config
+func (sa *storageAware) store(path string) error {
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	err = encoder.Encode(sa.stor)
+
+	if err != nil {
+		return err
+	}
+	logger.Log.Info("store", zap.String("path", path))
+	return nil
+}
+
+func (sa *storageAware) restore(path string) error {
+	file, err := os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&sa.stor)
+	if err != nil {
+		return err
+	}
+
+	logger.Log.Info("restore", zap.String("path", path), zap.Int("len gauges", len(sa.stor.Gauges())), zap.Int("len counters", len(sa.stor.Counters())))
+	return nil
+}
+
+// yet ungraceful
+func gracefulShutdownCatcher(path string) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		<-c
+		logger.Log.Info("shutdown signal caught")
+		shutdown(path)
+	}()
+}
+
+func persistenceTicker(interval int64, path string) {
+	ticker := time.NewTicker(time.Duration(interval) * time.Second)
+	defer ticker.Stop()
+
+	logger.Log.Debug("init persistence ticker", zap.Int64("interval", interval))
+
+	for {
+		select {
+		case <-ticker.C:
+			err := sa.store(path)
+			if err != nil {
+				logger.Log.Error("persistence ticker error", zap.Error(err), zap.String("path", path))
+			} else {
+				logger.Log.Debug("data stored by ticking timer")
+			}
+		}
+	}
+}
+
+func shutdown(path string) {
+	logger.Log.Info("shutting down gracefully, let's save data to disk", zap.String("path", path))
+	sa.store(path)
+	os.Exit(0)
+}
+
+var sa *storageAware
 
 func main() {
 	// init logging
-	serverConf = initConfig()
-	if err := logger.Initialize(serverConf.logLevel); err != nil {
-		panic(err)
+	serverConf, err := initConfig()
+	if err != nil {
+		panic(err) // logger has not been initialized yet
 	}
-	logger.Log.Info("server start")
+	if err := logger.Initialize(serverConf.logLevel); err != nil {
+		panic(err) // cannot log without logger
+	}
+
+	gracefulShutdownCatcher(serverConf.fileStoragePath)
 
 	// init storage
-	sa := newStorageAware(storage.NewMemStorage())
+	sa = newStorageAware(storage.NewMemStorage())
+	if serverConf.doRestoreValues {
+		sa.restore(serverConf.fileStoragePath)
+	}
 
 	logger.Log.Info(fmt.Sprintf("Starting server at %s:%d", serverConf.endpoint.host, serverConf.endpoint.port))
-	err := http.ListenAndServe(serverConf.endpoint.String(), newHandler(sa))
+
+	chiMux := newMux(sa)
+	if serverConf.storeInterval == 0 {
+		logger.Log.Info("will save data to disk immediately")
+		chiMux.Use(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				next.ServeHTTP(w, r)
+				err := sa.store(serverConf.fileStoragePath)
+				if err != nil {
+					logger.Log.Error(err.Error())
+				}
+			})
+		})
+	} else {
+		logger.Log.Info("will save data to disk periodically", zap.Int64("interval", serverConf.storeInterval))
+		go persistenceTicker(serverConf.storeInterval, serverConf.fileStoragePath)
+		logger.Log.Info("init ok")
+	}
+
+	err = http.ListenAndServe(serverConf.endpoint.String(), chiMux)
 	if err != nil {
 		logger.Log.Fatal(err.Error())
 	}

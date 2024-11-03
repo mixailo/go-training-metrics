@@ -32,7 +32,7 @@ func Test_newStorageAware(t *testing.T) {
 func Test_storageAware_getAllValues(t *testing.T) {
 	sa := newStorageAware(storage.NewMemStorage())
 
-	server := httptest.NewServer(newHandler(sa))
+	server := httptest.NewServer(newMux(sa))
 
 	defer server.Close()
 

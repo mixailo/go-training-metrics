@@ -18,7 +18,7 @@ type endpoint struct {
 type config struct {
 	endpoint        endpoint
 	logLevel        string
-	storeInterval   uint64
+	storeInterval   int64
 	fileStoragePath string
 	doRestoreValues bool
 }
@@ -57,8 +57,22 @@ func (e *endpoint) parse(value string) error {
 	return nil
 }
 
-func initConfig() config {
-	return argsConfig(envConfig(defaultConfig()))
+func (c *config) validate() error {
+	if c.storeInterval < 0 {
+		return errors.New("store interval must be a positive number or zero")
+	}
+
+	return nil
+}
+
+func initConfig() (config, error) {
+	c := envConfig(argsConfig(defaultConfig()))
+	err := c.validate()
+	if err != nil {
+		return config{}, err
+	} else {
+		return c, nil
+	}
 }
 
 func envConfig(defCfg config) config {
@@ -90,7 +104,7 @@ func envConfig(defCfg config) config {
 
 	v, ok = os.LookupEnv("STORE_INTERVAL")
 	if ok {
-		vv, err := strconv.ParseUint(v, 10, 64)
+		vv, err := strconv.ParseInt(v, 10, 64)
 		if err == nil {
 			cfg.storeInterval = vv
 		}
@@ -122,7 +136,7 @@ func argsConfig(cfg config) config {
 	flag.StringVar(&cfg.logLevel, "l", "info", "log level [info]")
 	flag.BoolVar(&cfg.doRestoreValues, "r", false, "do restore saved values")
 	flag.StringVar(&cfg.fileStoragePath, "f", cfg.fileStoragePath, "path to storage file")
-	flag.Uint64Var(&cfg.storeInterval, "i", cfg.storeInterval, "storage save interval in seconds")
+	flag.Int64Var(&cfg.storeInterval, "i", cfg.storeInterval, "storage save interval in seconds")
 	flag.Parse()
 
 	return cfg
