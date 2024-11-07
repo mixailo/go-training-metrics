@@ -77,10 +77,7 @@ func TestReport_All(t *testing.T) {
 
 func TestReport_Get(t *testing.T) {
 	report := NewReport()
-	err := report.AddUnConverted(TypeCounter, "test1", "10")
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	report.AddUnConverted(TypeCounter, "test1", "10")
 
 	tests := []struct {
 		name  string
