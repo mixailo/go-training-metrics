@@ -37,7 +37,8 @@ func (sa *storageAware) updateItemValue(w http.ResponseWriter, r *http.Request) 
 	mValue := chi.URLParam(r, "value")
 	mType := chi.URLParam(r, "type")
 
-	if mType == metrics.TypeCounter.String() {
+	switch mType {
+	case metrics.TypeCounter.String():
 		// counter type increments stored value
 		convertedValue, err := strconv.ParseInt(mValue, 10, 64)
 		if err != nil {
@@ -45,21 +46,21 @@ func (sa *storageAware) updateItemValue(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
+		w.WriteHeader(http.StatusOK)
 		sa.stor.UpdateCounter(mName, convertedValue)
-	} else if mType == metrics.TypeGauge.String() {
+	case metrics.TypeGauge.String():
 		// gauge type replaces stored value
 		convertedValue, err := strconv.ParseFloat(mValue, 64)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		w.WriteHeader(http.StatusOK)
 		sa.stor.UpdateGauge(mName, convertedValue)
-	} else {
+	default:
 		// unknown type
 		w.WriteHeader(http.StatusBadRequest)
-		return
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
 func (sa *storageAware) value(w http.ResponseWriter, r *http.Request) {
@@ -79,31 +80,30 @@ func (sa *storageAware) value(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if reqData.MType == metrics.TypeCounter.String() {
-		// counter type increments stored value
-		updated, ok := sa.stor.GetCounter(reqData.ID)
+	switch reqData.MType {
+	case metrics.TypeCounter.String():
+		stored, ok := sa.stor.GetCounter(reqData.ID)
 		if !ok {
-			updated = 0
+			stored = 0
 		}
 		resData = metrics.Metrics{
 			ID:    reqData.ID,
 			MType: reqData.MType,
-			Delta: &updated,
+			Delta: &stored,
 		}
-	} else if reqData.MType == metrics.TypeGauge.String() {
-		updated, ok := sa.stor.GetGauge(reqData.ID)
+	case metrics.TypeGauge.String():
+		stored, ok := sa.stor.GetGauge(reqData.ID)
 		if ok {
 			resData = metrics.Metrics{
 				ID:    reqData.ID,
 				MType: reqData.MType,
-				Value: &updated,
+				Value: &stored,
 			}
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-
-	} else {
+	default:
 		// unknown type
 		logger.Log.Info("unknown type", zap.String("type", reqData.MType))
 		w.WriteHeader(http.StatusBadRequest)
@@ -135,16 +135,18 @@ func (sa *storageAware) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if data.MType == metrics.TypeCounter.String() {
+	switch data.MType {
+	case metrics.TypeCounter.String():
 		// counter type increments stored value
 		sa.stor.UpdateCounter(data.ID, *data.Delta)
-	} else if data.MType == metrics.TypeGauge.String() {
+	case metrics.TypeGauge.String():
+		// gauge type updates stored value
 		sa.stor.UpdateGauge(data.ID, *data.Value)
-	} else {
-		// unknown type
+	default:
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
 	w.WriteHeader(http.StatusOK)
 
 	enc := json.NewEncoder(w)
@@ -155,7 +157,8 @@ func (sa *storageAware) getItemValue(w http.ResponseWriter, r *http.Request) {
 	mName := chi.URLParam(r, "name")
 	mType := chi.URLParam(r, "type")
 
-	if mType == metrics.TypeCounter.String() {
+	switch mType {
+	case metrics.TypeCounter.String():
 		v, ok := sa.stor.GetCounter(mName)
 		if ok {
 			w.WriteHeader(http.StatusOK)
@@ -165,7 +168,7 @@ func (sa *storageAware) getItemValue(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-	} else if mType == metrics.TypeGauge.String() {
+	case metrics.TypeGauge.String():
 		v, ok := sa.stor.GetGauge(mName)
 		if ok {
 			w.WriteHeader(http.StatusOK)

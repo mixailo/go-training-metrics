@@ -68,11 +68,8 @@ func (c *config) validate() error {
 func initConfig() (config, error) {
 	c := envConfig(argsConfig(defaultConfig()))
 	err := c.validate()
-	if err != nil {
-		return config{}, err
-	} else {
-		return c, nil
-	}
+
+	return c, err
 }
 
 func envConfig(defCfg config) config {

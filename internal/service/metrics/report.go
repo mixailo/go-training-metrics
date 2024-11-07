@@ -18,7 +18,9 @@ func (t Type) String() string {
 }
 
 type Report struct {
-	value map[string]Metrics
+	value     map[string]Metrics
+	hasErrors bool
+	errors    []error
 }
 
 type Metrics struct {
@@ -129,10 +131,12 @@ func (r *Report) Add(metric Metrics) {
 	r.value[metric.ID] = metric
 }
 
-func (r *Report) AddUnConverted(counterType Type, name, value string) error {
+func (r *Report) AddUnConverted(counterType Type, name, value string) {
 	m, err := NewMetrics(counterType, name, value)
 	if err == nil {
 		r.Add(m)
+	} else {
+		r.errors = append(r.errors, err)
+		r.hasErrors = true
 	}
-	return err
 }
