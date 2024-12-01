@@ -3,7 +3,7 @@ package database
 import (
 	"database/sql"
 
-	_ "modernc.org/sqlite"
+	_ "github.com/lib/pq"
 )
 
 type Config struct {
@@ -19,11 +19,7 @@ func NewConnection(c Config) (Connection, error) {
 	var p postgres
 	err := p.Connect(c)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return &p, nil
+	return &p, err
 }
 
 type postgres struct {

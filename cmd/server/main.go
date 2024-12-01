@@ -102,9 +102,8 @@ func main() {
 	db, err := database.NewConnection(database.Config{DSN: serverConf.dsn})
 	if err != nil {
 		logger.Log.Error(fmt.Sprintf("Cannot connect to database '%s': '%s'", serverConf.dsn, err.Error()))
-	} else {
-		sa.Db = db
 	}
+	sa.DB = db
 
 	logger.Log.Info(fmt.Sprintf("Starting server at %s:%d", serverConf.endpoint.host, serverConf.endpoint.port))
 

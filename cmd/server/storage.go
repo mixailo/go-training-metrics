@@ -29,7 +29,7 @@ type databaseConnection interface {
 }
 
 type storageAware struct {
-	Db   databaseConnection
+	DB   databaseConnection
 	stor metricsStorage
 }
 
@@ -203,7 +203,7 @@ func (sa *storageAware) getAllValues(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sa *storageAware) ping(w http.ResponseWriter, r *http.Request) {
-	err := sa.Db.Ping()
+	err := sa.DB.Ping()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
