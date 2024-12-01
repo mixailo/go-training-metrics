@@ -5,6 +5,7 @@ go 1.22.6
 require (
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-resty/resty/v2 v2.15.3
+	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
 )
