@@ -1,4 +1,4 @@
-package reporter
+package sender
 
 import (
 	"testing"
@@ -34,8 +34,9 @@ func TestServerEndpoint_String(t *testing.T) {
 }
 
 func Test_reportPath(t *testing.T) {
+	cv := int64(10)
 	type args struct {
-		metric metrics.Data
+		metric metrics.Metrics
 	}
 	tests := []struct {
 		name       string
@@ -45,28 +46,28 @@ func Test_reportPath(t *testing.T) {
 		{
 			name: "counter",
 			args: args{
-				metric: metrics.Data{
-					Name:        "test",
-					Value:       "13444",
-					CounterType: metrics.TypeCounter,
+				metric: metrics.Metrics{
+					ID:    "test",
+					Delta: &cv,
+					MType: metrics.TypeCounter.String(),
 				},
 			},
-			wantResult: "/update/counter/test/13444",
+			wantResult: "/update/",
 		},
 		{
 			name: "gauge",
 			args: args{
-				metric: metrics.Data{
-					Name:        "test",
-					Value:       "13444",
-					CounterType: metrics.TypeGauge,
+				metric: metrics.Metrics{
+					ID:    "test",
+					Delta: &cv,
+					MType: metrics.TypeCounter.String(),
 				},
 			},
-			wantResult: "/update/gauge/test/13444",
+			wantResult: "/update/",
 		},
 	}
 	for _, tt := range tests {
-		assert.Equal(t, tt.wantResult, reportPath(tt.args.metric))
+		assert.Equal(t, tt.wantResult, reportPath())
 	}
 }
 

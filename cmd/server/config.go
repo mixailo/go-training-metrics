@@ -16,7 +16,11 @@ type endpoint struct {
 }
 
 type config struct {
-	endpoint endpoint
+	endpoint        endpoint
+	logLevel        string
+	storeInterval   int64
+	fileStoragePath string
+	doRestoreValues bool
 }
 
 func (e *endpoint) String() string {
@@ -53,13 +57,29 @@ func (e *endpoint) parse(value string) error {
 	return nil
 }
 
-func initConfig() config {
-	return argsConfig(envConfig(defaultConfig()))
+func (c *config) validate() error {
+	if c.storeInterval < 0 {
+		return errors.New("store interval must be a positive number or zero")
+	}
+
+	return nil
+}
+
+func initConfig() (config, error) {
+	c := envConfig(argsConfig(defaultConfig()))
+	err := c.validate()
+
+	return c, err
 }
 
 func envConfig(defCfg config) config {
+	var (
+		v  string
+		ok bool
+	)
+
 	cfg := defCfg
-	v, ok := os.LookupEnv("ADDRESS")
+	v, ok = os.LookupEnv("ADDRESS")
 
 	if ok {
 		// parse env vars
@@ -67,6 +87,29 @@ func envConfig(defCfg config) config {
 		if err != nil {
 			log.Fatal(err)
 		}
+	}
+
+	v, ok = os.LookupEnv("LOG_LEVEL")
+	if ok {
+		cfg.logLevel = v
+	}
+
+	v, ok = os.LookupEnv("FILE_STORAGE_PATH")
+	if ok {
+		cfg.fileStoragePath = v
+	}
+
+	v, ok = os.LookupEnv("STORE_INTERVAL")
+	if ok {
+		vv, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			cfg.storeInterval = vv
+		}
+	}
+
+	v, ok = os.LookupEnv("RESTORE")
+	if ok {
+		cfg.doRestoreValues = v == "true"
 	}
 
 	return cfg
@@ -78,11 +121,20 @@ func defaultConfig() (cfg config) {
 			host: "localhost",
 			port: 8080,
 		},
+		logLevel:        "info",
+		doRestoreValues: true,
+		storeInterval:   300,
+		fileStoragePath: "values.json",
 	}
 }
 
 func argsConfig(cfg config) config {
 	flag.Var(&cfg.endpoint, "a", "server endpoint [host:port]")
+	flag.StringVar(&cfg.logLevel, "l", "info", "log level [info]")
+	flag.BoolVar(&cfg.doRestoreValues, "r", false, "do restore saved values")
+	flag.StringVar(&cfg.fileStoragePath, "f", cfg.fileStoragePath, "path to storage file")
+	flag.Int64Var(&cfg.storeInterval, "i", cfg.storeInterval, "storage save interval in seconds")
 	flag.Parse()
+
 	return cfg
 }
