@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/mixailo/go-training-metrics/internal/repository/storage"
+	"github.com/mixailo/go-training-metrics/internal/service/database"
 	"github.com/mixailo/go-training-metrics/internal/service/logger"
 )
 
@@ -25,6 +26,7 @@ func newMux(sa *storageAware) *chi.Mux {
 	router.Post("/update/", sa.update)
 	router.Post("/value/", sa.value)
 	router.Get("/", sa.getAllValues)
+	router.Get("/ping", sa.ping)
 
 	return router
 }
@@ -95,6 +97,13 @@ func main() {
 	if serverConf.doRestoreValues {
 		sa.restore(serverConf.fileStoragePath)
 	}
+
+	//inject DB connection
+	db, err := database.NewConnection(database.Config{DSN: serverConf.dsn})
+	if err != nil {
+		logger.Log.Error(fmt.Sprintf("Cannot connect to database '%s': '%s'", serverConf.dsn, err.Error()))
+	}
+	sa.DB = db
 
 	logger.Log.Info(fmt.Sprintf("Starting server at %s:%d", serverConf.endpoint.host, serverConf.endpoint.port))
 
