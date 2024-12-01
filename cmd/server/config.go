@@ -21,6 +21,7 @@ type config struct {
 	storeInterval   int64
 	fileStoragePath string
 	doRestoreValues bool
+	dsn             string
 }
 
 func (e *endpoint) String() string {
@@ -112,6 +113,11 @@ func envConfig(defCfg config) config {
 		cfg.doRestoreValues = v == "true"
 	}
 
+	v, ok = os.LookupEnv("DATABASE_DSN")
+	if ok {
+		cfg.dsn = v
+	}
+
 	return cfg
 }
 
@@ -125,6 +131,7 @@ func defaultConfig() (cfg config) {
 		doRestoreValues: true,
 		storeInterval:   300,
 		fileStoragePath: "values.json",
+		dsn:             "",
 	}
 }
 
@@ -133,6 +140,7 @@ func argsConfig(cfg config) config {
 	flag.StringVar(&cfg.logLevel, "l", "info", "log level [info]")
 	flag.BoolVar(&cfg.doRestoreValues, "r", false, "do restore saved values")
 	flag.StringVar(&cfg.fileStoragePath, "f", cfg.fileStoragePath, "path to storage file")
+	flag.StringVar(&cfg.dsn, "d", cfg.dsn, "database dsn")
 	flag.Int64Var(&cfg.storeInterval, "i", cfg.storeInterval, "storage save interval in seconds")
 	flag.Parse()
 

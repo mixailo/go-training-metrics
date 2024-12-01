@@ -24,7 +24,12 @@ type metricsStorage interface {
 	UnmarshalJSON([]byte) error
 }
 
+type databaseConnection interface {
+	Ping() error
+}
+
 type storageAware struct {
+	Db   databaseConnection
 	stor metricsStorage
 }
 
@@ -195,6 +200,16 @@ func (sa *storageAware) getAllValues(w http.ResponseWriter, r *http.Request) {
 	foot := `</table></body></html>`
 
 	io.WriteString(w, foot)
+}
+
+func (sa *storageAware) ping(w http.ResponseWriter, r *http.Request) {
+	err := sa.Db.Ping()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (sa *storageAware) store(path string) error {
