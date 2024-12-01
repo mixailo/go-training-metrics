@@ -1,35 +1,8 @@
 package storage
 
-import "encoding/json"
-
 type MemStorage struct {
 	gauges   map[string]float64
 	counters map[string]int64
-}
-
-func (m *MemStorage) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		Gauges   map[string]float64 `json:"Gauges"`
-		Counters map[string]int64   `json:"Counters"`
-	}{
-		Gauges:   m.Gauges(),
-		Counters: m.Counters(),
-	})
-}
-
-func (m *MemStorage) UnmarshalJSON(data []byte) error {
-	encoded := struct {
-		Gauges   map[string]float64 `json:"Gauges"`
-		Counters map[string]int64   `json:"Counters"`
-	}{}
-	err := json.Unmarshal(data, &encoded)
-	if err != nil {
-		return err
-	}
-	m.gauges = encoded.Gauges
-	m.counters = encoded.Counters
-
-	return nil
 }
 
 func (m *MemStorage) UpdateGauge(name string, value float64) {

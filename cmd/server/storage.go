@@ -19,9 +19,6 @@ type metricsStorage interface {
 	GetCounter(name string) (val int64, ok bool)
 	Gauges() map[string]float64
 	Counters() map[string]int64
-
-	MarshalJSON() ([]byte, error)
-	UnmarshalJSON([]byte) error
 }
 
 type databaseConnection interface {
