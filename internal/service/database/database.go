@@ -82,6 +82,11 @@ func (p *postgres) Counters() map[string]int64 {
 		return result
 	}
 
+	if rows.Err() != nil {
+		logger.Log.Error(rows.Err().Error())
+		return result
+	}
+
 	for rows.Next() {
 		var name string
 		var value int64
@@ -100,6 +105,11 @@ func (p *postgres) Gauges() map[string]float64 {
 
 	if err != nil {
 		logger.Log.Error(err.Error())
+		return result
+	}
+
+	if rows.Err() != nil {
+		logger.Log.Error(rows.Err().Error())
 		return result
 	}
 
