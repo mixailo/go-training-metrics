@@ -11,7 +11,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/mixailo/go-training-metrics/internal/repository/storage"
-	"github.com/mixailo/go-training-metrics/internal/service/database"
+	"github.com/mixailo/go-training-metrics/internal/repository/storage/database"
+	database2 "github.com/mixailo/go-training-metrics/internal/service/database"
 	"github.com/mixailo/go-training-metrics/internal/service/logger"
 )
 
@@ -92,18 +93,37 @@ func main() {
 
 	gracefulShutdownCatcher(&serverConf)
 
-	// init storage
-	sa = newStorageAware(storage.NewMemStorage())
-	if serverConf.doRestoreValues {
-		sa.restore(serverConf.fileStoragePath)
+	conn, err := database2.NewConnection(database2.Config{DSN: serverConf.dsn})
+	var databaseStorage metricsStorage
+
+	if err == nil {
+		defer conn.Close()
+		db, err := database.NewStorage(conn)
+		if err == nil {
+			databaseStorage = db
+		} else {
+			logger.Log.Debug("error connecting to database", zap.Error(err))
+		}
+	} else {
+		logger.Log.Debug("error connecting to database", zap.Error(err))
 	}
 
-	//inject DB connection
-	db, err := database.NewConnection(database.Config{DSN: serverConf.dsn})
 	if err != nil {
 		logger.Log.Error(fmt.Sprintf("Cannot connect to database '%s': '%s'", serverConf.dsn, err.Error()))
 	}
-	sa.DB = db
+
+	// init storage
+	if databaseStorage != nil {
+		sa = newStorageAware(databaseStorage)
+	} else {
+		sa = newStorageAware(storage.NewMemStorage())
+		if serverConf.doRestoreValues {
+			err := sa.restore(serverConf.fileStoragePath)
+			if err != nil {
+				logger.Log.Error(err.Error())
+			}
+		}
+	}
 
 	logger.Log.Info(fmt.Sprintf("Starting server at %s:%d", serverConf.endpoint.host, serverConf.endpoint.port))
 

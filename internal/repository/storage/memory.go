@@ -1,5 +1,7 @@
 package storage
 
+import "errors"
+
 type MemStorage struct {
 	gauges   map[string]float64
 	counters map[string]int64
@@ -38,4 +40,8 @@ func (m *MemStorage) Gauges() map[string]float64 {
 
 func (m *MemStorage) Counters() map[string]int64 {
 	return m.counters
+}
+
+func (m *MemStorage) Ping() error {
+	return errors.New("PING not supported")
 }

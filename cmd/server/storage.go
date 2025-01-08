@@ -19,14 +19,10 @@ type metricsStorage interface {
 	GetCounter(name string) (val int64, ok bool)
 	Gauges() map[string]float64
 	Counters() map[string]int64
-}
-
-type databaseConnection interface {
 	Ping() error
 }
 
 type storageAware struct {
-	DB   databaseConnection
 	stor metricsStorage
 }
 
@@ -200,8 +196,9 @@ func (sa *storageAware) getAllValues(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sa *storageAware) ping(w http.ResponseWriter, r *http.Request) {
-	err := sa.DB.Ping()
+	err := sa.stor.Ping()
 	if err != nil {
+		logger.Log.Debug("error", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
