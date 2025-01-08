@@ -115,8 +115,10 @@ func main() {
 	// init storage
 	if databaseStorage != nil {
 		sa = newStorageAware(databaseStorage)
+		logger.Log.Info("using database storage")
 	} else {
 		sa = newStorageAware(storage.NewMemStorage())
+		logger.Log.Info("using memory storage")
 		if serverConf.doRestoreValues {
 			err := sa.restore(serverConf.fileStoragePath)
 			if err != nil {
