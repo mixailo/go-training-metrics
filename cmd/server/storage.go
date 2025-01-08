@@ -19,9 +19,7 @@ type metricsStorage interface {
 	GetCounter(name string) (val int64, ok bool)
 	Gauges() map[string]float64
 	Counters() map[string]int64
-
-	MarshalJSON() ([]byte, error)
-	UnmarshalJSON([]byte) error
+	Ping() error
 }
 
 type storageAware struct {
@@ -195,6 +193,17 @@ func (sa *storageAware) getAllValues(w http.ResponseWriter, r *http.Request) {
 	foot := `</table></body></html>`
 
 	io.WriteString(w, foot)
+}
+
+func (sa *storageAware) ping(w http.ResponseWriter, r *http.Request) {
+	err := sa.stor.Ping()
+	if err != nil {
+		logger.Log.Debug("error", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (sa *storageAware) store(path string) error {

@@ -1,6 +1,9 @@
 package storage
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"errors"
+)
 
 type MemStorage struct {
 	gauges   map[string]float64
@@ -65,4 +68,8 @@ func (m *MemStorage) Gauges() map[string]float64 {
 
 func (m *MemStorage) Counters() map[string]int64 {
 	return m.counters
+}
+
+func (m *MemStorage) Ping() error {
+	return errors.New("PING not supported")
 }
